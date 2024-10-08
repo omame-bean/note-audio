@@ -1,6 +1,7 @@
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
+// A4サイズとレイアウトの定数
 const PAGE_HEIGHT = 297; // A4サイズの高さ（mm）
 const PAGE_WIDTH = 210; // A4サイズの幅（mm）
 const LINE_HEIGHT = 40; // 1行の高さ（px）
@@ -9,28 +10,21 @@ const PADDING_BOTTOM = 60; // 下部のパディング（px）
 const LINES_PER_PAGE = 28; // 1ページあたりの罫線数
 const MAX_LINES_PER_PAGE = Math.floor(LINES_PER_PAGE * 0.95); // ページの95%まで使用
 
+// ノートを複数ページに分割する関数
 export const generateNotePages = (content: string): string[] => {
-  console.log('Content received:', content);
-  console.log('MAX_LINES_PER_PAGE:', MAX_LINES_PER_PAGE);
-
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = content;
   const elements = Array.from(tempDiv.children);
-
-  console.log('Number of elements:', elements.length);
 
   const pages: string[] = [];
   let currentPage = '';
   let currentLines = 0;
 
-  elements.forEach((element, index) => {
-    console.log(`Processing element ${index + 1}:`, element.outerHTML);
+  elements.forEach((element) => {
     const elementContent = element.outerHTML;
     const elementLines = getElementLines(element);
-    console.log(`Element lines: ${elementLines}`);
     
     if (currentLines + elementLines > MAX_LINES_PER_PAGE) {
-      console.log(`Page full. Current lines: ${currentLines}, Max lines: ${MAX_LINES_PER_PAGE}`);
       if (currentLines > 0) {
         pages.push(wrapPageContent(currentPage, pages.length));
         currentPage = '';
@@ -40,18 +34,16 @@ export const generateNotePages = (content: string): string[] => {
     
     currentPage += elementContent;
     currentLines += elementLines;
-    console.log(`Current page lines after adding element: ${currentLines}`);
   });
 
   if (currentPage) {
-    console.log('Adding final page');
     pages.push(wrapPageContent(currentPage, pages.length));
   }
 
-  console.log('Total pages generated:', pages.length);
   return pages;
 };
 
+// 要素の行数を推定する関数
 const getElementLines = (element: Element): number => {
   const content = element.textContent || '';
   const lines = Math.ceil(content.length / 40); // 40文字で1行と仮定
@@ -70,6 +62,7 @@ const getElementLines = (element: Element): number => {
   }
 };
 
+// ページコンテンツをHTMLでラップする関数
 const wrapPageContent = (content: string, pageNumber: number): string => {
   return `
     <style>
@@ -141,8 +134,8 @@ const wrapPageContent = (content: string, pageNumber: number): string => {
   `;
 };
 
+// PDFエクスポート処理
 export const handleExportPDF = async (generatedNotes: string[]) => {
-  console.log('Exporting PDF with', generatedNotes.length, 'pages');
   const pdf = new jsPDF('p', 'mm', 'a4');
 
   for (let i = 0; i < generatedNotes.length; i++) {

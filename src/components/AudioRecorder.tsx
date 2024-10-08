@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Mic, Upload } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-// SpeechRecognitionの型定義のインポートを削除
-
+// AudioRecorderコンポーネントのプロパティ定義
 interface AudioRecorderProps {
   setTranscription: React.Dispatch<React.SetStateAction<string>>
   setError: React.Dispatch<React.SetStateAction<string | null>>
@@ -27,10 +26,12 @@ export default function AudioRecorder({
   isTranscribing,
   setIsTranscribing
 }: AudioRecorderProps) {
+  // 状態の初期化
   const [isRecording, setIsRecording] = useState(false)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  // SpeechRecognitionの初期化と設定
   useEffect(() => {
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
@@ -40,6 +41,7 @@ export default function AudioRecorder({
         recognitionRef.current.interimResults = true
         recognitionRef.current.lang = 'ja-JP'
 
+        // 音声認識結果の処理
         recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
           let finalTranscript = ''
 
@@ -54,6 +56,7 @@ export default function AudioRecorder({
           }
         }
 
+        // エラー処理
         recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
           setError(`音声認識エラー: ${event.error}`)
           setIsRecording(false)
@@ -63,6 +66,7 @@ export default function AudioRecorder({
       setError('お使いのブラウザは音声認識をサポートしていません。')
     }
 
+    // コンポーネントのクリーンアップ
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop()
@@ -70,13 +74,14 @@ export default function AudioRecorder({
     }
   }, [setTranscription, setError])
 
+  // 録音開始・停止の処理
   const handleStartRecording = () => {
     if (recognitionRef.current) {
       if (!isRecording) {
         recognitionRef.current.start()
         setIsRecording(true)
         setError(null)
-        // Set a timeout to stop recording after 15 minutes
+        // 15分後に録音を自動停止するタイマーを設定
         recordingTimeoutRef.current = setTimeout(() => {
           handleStopRecording()
         }, 15 * 60 * 1000)
@@ -88,6 +93,7 @@ export default function AudioRecorder({
     }
   }
 
+  // 録音停止の処理
   const handleStopRecording = () => {
     if (recognitionRef.current) {
       recognitionRef.current.stop()
@@ -98,6 +104,7 @@ export default function AudioRecorder({
     }
   }
 
+  // ファイルアップロードの処理
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -114,6 +121,7 @@ export default function AudioRecorder({
     }
   }
 
+  // ファイルの文字起こし処理
   const handleTranscribeFile = async () => {
     if (!audioFile) {
       setError('音声ファイルをアップロードしてください。')
@@ -153,6 +161,7 @@ export default function AudioRecorder({
     }
   }
 
+  // コンポーネントのレンダリング
   return (
     <Tabs defaultValue="microphone" className="w-full">
       <TabsList className="grid w-full grid-cols-2">

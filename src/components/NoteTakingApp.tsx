@@ -13,13 +13,14 @@ import NoteEditor from '@/components/NoteEditor'
 import { generateNotePages, handleExportPDF } from '@/utils/noteUtils'
 import axios from 'axios';
 
+// プロンプトオプションの定義
 const promptOptions = [
   { value: 'lecture', label: '授業の内容をきれいにまとめる' },
   { value: 'meeting', label: '会議の内容をきれいにまとめる' },
   { value: 'memo', label: '簡単なメモとしてまとめる' },
 ]
 
-// 新しい関数を追加
+// 生成されたコンテンツをクリーンアップする関数
 const cleanGeneratedContent = (content: string): string => {
   // "会議ノート" という文字列を削除
   content = content.replace(/会議ノート/g, '');
@@ -34,6 +35,7 @@ const cleanGeneratedContent = (content: string): string => {
 };
 
 export default function NoteTakingApp() {
+  // 状態の初期化
   const [transcription, setTranscription] = useState('')
   const [selectedPrompt, setSelectedPrompt] = useState('')
   const [generatedNotes, setGeneratedNotes] = useState<string[]>([])
@@ -45,9 +47,11 @@ export default function NoteTakingApp() {
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
 
+  // refの初期化
   const noteRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // ノート生成処理
   const handleGenerateNote = async () => {
     if (!apiKey) {
       setError('APIキーが設定されていません。');
@@ -107,13 +111,16 @@ ${transcription}` }
     }
   }
 
+  // コンポーネントのレンダリング
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <header className="bg-white shadow-sm p-4">
         <h1 className="text-2xl font-bold text-gray-800">AI Note Taking App</h1>
       </header>
       <main className="flex-grow flex flex-col md:flex-row p-4 space-y-4 md:space-y-0 md:space-x-4">
+        {/* 左側のパネル */}
         <div className="w-full md:w-1/3 bg-white rounded-lg shadow-md p-4 space-y-4">
+          {/* APIキー入力フィールド */}
           <div className="relative">
             <Input
               type={showApiKey ? "text" : "password"}
@@ -133,6 +140,7 @@ ${transcription}` }
               )}
             </button>
           </div>
+          {/* 音声録音コンポーネント */}
           <AudioRecorder
             setTranscription={setTranscription}
             setError={setError}
@@ -142,12 +150,14 @@ ${transcription}` }
             isTranscribing={isTranscribing}
             setIsTranscribing={setIsTranscribing}
           />
+          {/* エラー表示 */}
           {error && (
             <Alert variant="destructive">
               <AlertTitle>エラー</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          {/* 文字起こし表示エリア */}
           <Textarea
             value={transcription}
             onChange={(e) => setTranscription(e.target.value)}
@@ -155,6 +165,7 @@ ${transcription}` }
             rows={5}
             className="w-full resize-none"
           />
+          {/* プロンプト選択 */}
           <Select onValueChange={setSelectedPrompt}>
             <SelectTrigger>
               <SelectValue placeholder="プロンプトを選択" />
@@ -167,6 +178,7 @@ ${transcription}` }
               ))}
             </SelectContent>
           </Select>
+          {/* ノート生成ボタン */}
           <Button 
             onClick={handleGenerateNote} 
             disabled={!transcription || !selectedPrompt || !apiKey || isGenerating} 
@@ -175,6 +187,7 @@ ${transcription}` }
             {isGenerating ? 'ノート生成中...' : 'ノート生成'}
           </Button>
         </div>
+        {/* 右側のパネル（ノートエディタ） */}
         <NoteEditor
           generatedNotes={generatedNotes}
           currentPage={currentPage}
