@@ -10,7 +10,7 @@ import { EyeIcon, EyeOffIcon, Download } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AudioRecorder from '@/components/AudioRecorder'
 import NoteEditor from '@/components/NoteEditor'
-import { generateNotePage, handleExportPDF } from '@/utils/noteUtils'
+import { generateNotePages, handleExportPDF } from '@/utils/noteUtils'
 import axios from 'axios';
 
 const promptOptions = [
@@ -65,7 +65,7 @@ export default function NoteTakingApp() {
       const response = await axios.post(
         'https://api.openai.com/v1/chat/completions',
         {
-          model: 'gpt-4o',
+          model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: 'あなたは優秀なノートテイカーです。与えられた文字起こしを整理し、読みやすくまとめてください。HTMLタグを使用して構造化してください。' },
             { role: 'user', content: `以下の文字起こしを「${promptOptions.find(p => p.value === selectedPrompt)?.label}」というプロンプトに基づいてまとめてください。以下の指示に従ってください：
@@ -95,7 +95,8 @@ ${transcription}` }
       // 生成されたコンテンツをクリーンアップ
       generatedContent = cleanGeneratedContent(generatedContent);
       
-      const generatedPages = [generateNotePage(generatedContent, 0)];
+      // 複数ページに分割
+      const generatedPages = generateNotePages(generatedContent);
       setGeneratedNotes(generatedPages);
       setCurrentPage(0);
     } catch (error) {

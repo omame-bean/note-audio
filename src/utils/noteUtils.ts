@@ -1,13 +1,76 @@
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
-export const generateNotePage = (content: string, pageNumber: number) => {
-  // A4サイズに合わせて行数を計算（余白を考慮）
-  const linesPerPage = 25;
-  const currentLines = content.split('<br>').length;
-  const remainingLines = Math.max(0, linesPerPage - currentLines);
-  const additionalLines = Array(remainingLines).fill('<br>').join('');
+const PAGE_HEIGHT = 297; // A4サイズの高さ（mm）
+const PAGE_WIDTH = 210; // A4サイズの幅（mm）
+const LINE_HEIGHT = 40; // 1行の高さ（px）
+const PADDING_TOP = 40; // 上部のパディング（px）
+const PADDING_BOTTOM = 60; // 下部のパディング（px）
+const LINES_PER_PAGE = 28; // 1ページあたりの罫線数
+const MAX_LINES_PER_PAGE = Math.floor(LINES_PER_PAGE * 0.95); // ページの95%まで使用
 
+export const generateNotePages = (content: string): string[] => {
+  console.log('Content received:', content);
+  console.log('MAX_LINES_PER_PAGE:', MAX_LINES_PER_PAGE);
+
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = content;
+  const elements = Array.from(tempDiv.children);
+
+  console.log('Number of elements:', elements.length);
+
+  const pages: string[] = [];
+  let currentPage = '';
+  let currentLines = 0;
+
+  elements.forEach((element, index) => {
+    console.log(`Processing element ${index + 1}:`, element.outerHTML);
+    const elementContent = element.outerHTML;
+    const elementLines = getElementLines(element);
+    console.log(`Element lines: ${elementLines}`);
+    
+    if (currentLines + elementLines > MAX_LINES_PER_PAGE) {
+      console.log(`Page full. Current lines: ${currentLines}, Max lines: ${MAX_LINES_PER_PAGE}`);
+      if (currentLines > 0) {
+        pages.push(wrapPageContent(currentPage, pages.length));
+        currentPage = '';
+        currentLines = 0;
+      }
+    }
+    
+    currentPage += elementContent;
+    currentLines += elementLines;
+    console.log(`Current page lines after adding element: ${currentLines}`);
+  });
+
+  if (currentPage) {
+    console.log('Adding final page');
+    pages.push(wrapPageContent(currentPage, pages.length));
+  }
+
+  console.log('Total pages generated:', pages.length);
+  return pages;
+};
+
+const getElementLines = (element: Element): number => {
+  const content = element.textContent || '';
+  const lines = Math.ceil(content.length / 40); // 40文字で1行と仮定
+
+  switch (element.tagName.toLowerCase()) {
+    case 'h1':
+      return 2; // h1は2行分
+    case 'h2':
+      return 1; // h2は1行分
+    case 'ul':
+      return element.children.length; // リストの各項目を1行とカウント
+    case 'p':
+      return lines;
+    default:
+      return 1;
+  }
+};
+
+const wrapPageContent = (content: string, pageNumber: number): string => {
   return `
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap');
@@ -73,43 +136,36 @@ export const generateNotePage = (content: string, pageNumber: number) => {
     </style>
     <div class="note-content">
       ${content}
-      ${additionalLines}
       <div class="page-number">- ${pageNumber + 1} -</div>
     </div>
-  `
-}
+  `;
+};
 
 export const handleExportPDF = async (generatedNotes: string[]) => {
-  const pdf = new jsPDF('p', 'mm', 'a4')
-  
+  console.log('Exporting PDF with', generatedNotes.length, 'pages');
+  const pdf = new jsPDF('p', 'mm', 'a4');
+
   for (let i = 0; i < generatedNotes.length; i++) {
-    const pageElement = document.createElement('div')
-    pageElement.innerHTML = generatedNotes[i]
-    document.body.appendChild(pageElement)
+    const pageElement = document.createElement('div');
+    pageElement.innerHTML = generatedNotes[i];
+    pageElement.style.width = `${PAGE_WIDTH}mm`;
+    pageElement.style.height = `${PAGE_HEIGHT}mm`;
+    document.body.appendChild(pageElement);
 
     const canvas = await html2canvas(pageElement, {
       scale: 2,
-      logging: false,
       useCORS: true,
-      allowTaint: true,
-      width: 210 * 3.7795275591, // A4 width in pixels at 96 DPI
-      height: 297 * 3.7795275591, // A4 height in pixels at 96 DPI
-      onclone: (document) => {
-        const style = document.createElement('style')
-        style.innerHTML = `
-          @import url('https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap');
-          body { font-family: 'Zen Kurenaido', sans-serif; }
-        `
-        document.head.appendChild(style)
-      }
-    })
+      logging: false,
+      width: PAGE_WIDTH * 3.779528, // 1mmあたり約3.779528ピクセル（72dpi）
+      height: PAGE_HEIGHT * 3.779528
+    });
 
-    const imgData = canvas.toDataURL('image/png')
-    if (i > 0) pdf.addPage()
-    pdf.addImage(imgData, 'PNG', 0, 0, 210, 297)
+    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+    if (i > 0) pdf.addPage();
+    pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
 
-    document.body.removeChild(pageElement)
+    document.body.removeChild(pageElement);
   }
 
-  pdf.save('generated-notes.pdf')
-}
+  pdf.save('generated_note.pdf');
+};
