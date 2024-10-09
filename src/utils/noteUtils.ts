@@ -111,13 +111,13 @@ const wrapPageContent = (content: string, pageNumber: number): string => {
         left: 0;
       }
       .highlight {
-        background-color: #ffff00;
+        background-color: yellow;
       }
       .red-text {
-        color: #ff0000;
+        color: red;
       }
       .blue-text {
-        color: #0000ff;
+        color: blue;
       }
       .page-number {
         position: absolute;

@@ -51,6 +51,15 @@ export default function NoteTakingApp() {
   const noteRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // ノートを更新する関数
+  const updateNote = (pageIndex: number, content: string) => {
+    setGeneratedNotes(prevNotes => {
+      const newNotes = [...prevNotes]
+      newNotes[pageIndex] = content
+      return newNotes
+    })
+  }
+
   // ノート生成処理
   const handleGenerateNote = async () => {
     if (!apiKey) {
@@ -195,6 +204,7 @@ ${transcription}` }
           noteRef={noteRef}
           containerRef={containerRef}
           handleExportPDF={() => handleExportPDF(generatedNotes)}
+          updateNote={updateNote}
         />
       </main>
     </div>

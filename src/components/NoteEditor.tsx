@@ -1,10 +1,9 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download, Type, Highlighter, X } from 'lucide-react'
 
-// NoteEditorコンポーネントのプロパティ定義
 interface NoteEditorProps {
   generatedNotes: string[]
   currentPage: number
@@ -12,6 +11,7 @@ interface NoteEditorProps {
   noteRef: React.RefObject<HTMLDivElement>
   containerRef: React.RefObject<HTMLDivElement>
   handleExportPDF: () => void
+  updateNote: (pageIndex: number, content: string) => void
 }
 
 export default function NoteEditor({
@@ -20,73 +20,82 @@ export default function NoteEditor({
   setCurrentPage,
   noteRef,
   containerRef,
-  handleExportPDF
+  handleExportPDF,
+  updateNote
 }: NoteEditorProps) {
-  // 状態の初期化
   const [scale, setScale] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
   const [activeFormat, setActiveFormat] = useState<string | null>(null)
+  const editorRef = useRef<HTMLDivElement>(null)
 
-  // ズームイン機能
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = generatedNotes[currentPage]
+    }
+  }, [currentPage, generatedNotes])
+
   const handleZoomIn = () => {
     setScale(prevScale => Math.min(prevScale + 0.1, 2))
   }
 
-  // ズームアウト機能
   const handleZoomOut = () => {
     setScale(prevScale => Math.max(prevScale - 0.1, 0.5))
   }
 
-  // 編集モードの切り替え
   const handleToggleEdit = () => {
     setIsEditing(!isEditing)
-    setScale(1)
     setActiveFormat(null)
   }
 
-  // 前のページに移動
   const handlePrevPage = () => {
+    if (isEditing && editorRef.current) {
+      updateNote(currentPage, editorRef.current.innerHTML)
+    }
     setCurrentPage(prev => Math.max(prev - 1, 0))
   }
 
-  // 次のページに移動
   const handleNextPage = () => {
+    if (isEditing && editorRef.current) {
+      updateNote(currentPage, editorRef.current.innerHTML)
+    }
     setCurrentPage(prev => Math.min(prev + 1, generatedNotes.length - 1))
   }
 
-  // テキストのフォーマット適用
   const handleFormatText = (format: string) => {
     if (!isEditing) return
 
     setActiveFormat(prevFormat => prevFormat === format ? null : format)
 
-    if (noteRef.current) {
-      noteRef.current.focus()
-      const selection = window.getSelection()
-      if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0)
-        const span = document.createElement('span')
-        span.className = format
-        
-        if (range.toString().trim() === '') {
-          // カーソルの位置に新しい空のスパンを挿入
-          range.insertNode(span)
-          range.setStartAfter(span)
-          range.setEndAfter(span)
-        } else {
-          //選択されたテキストを新しいスパンで囲む
-          range.surroundContents(span)
-          range.setStartAfter(span)
-          range.setEndAfter(span)
+    const selection = window.getSelection()
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0)
+      
+      if (format === '') {
+        // フォーマット解除
+        document.execCommand('removeFormat', false, undefined)
+      } else {
+        // フォーマット適用
+        document.execCommand('styleWithCSS', false, 'true')
+        switch (format) {
+          case 'highlight':
+            document.execCommand('backColor', false, 'yellow')
+            break
+          case 'red-text':
+            document.execCommand('foreColor', false, 'red')
+            break
+          case 'blue-text':
+            document.execCommand('foreColor', false, 'blue')
+            break
         }
-        
-        selection.removeAllRanges()
-        selection.addRange(range)
+      }
+
+      // 変更を保存
+      if (editorRef.current) {
+        updateNote(currentPage, editorRef.current.innerHTML)
       }
     }
   }
 
-  // キーダウンイベントの処理
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault()
@@ -94,15 +103,12 @@ export default function NoteEditor({
     }
   }
 
-  // 入力イベントの処理
-  const handleInput = () => {
-    if (noteRef.current) {
-      const updatedContent = noteRef.current.innerHTML
-      // Here you would update the generatedNotes state in the parent component
+  const handleBlur = () => {
+    if (isEditing && editorRef.current) {
+      updateNote(currentPage, editorRef.current.innerHTML)
     }
   }
 
-  // ノートが生成されていない場合のメッセージ表示
   if (generatedNotes.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500">
@@ -111,12 +117,10 @@ export default function NoteEditor({
     )
   }
 
-  // メインのコンポーネントレンダリング
   return (
     <div className="w-full md:w-2/3 bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
       {/* ツールバー */}
       <div className="flex justify-between items-center p-4 bg-gray-50 border-b">
-        {/* ズームとエディットボタン */}
         <div className="flex space-x-2">
           <Button onClick={handleZoomOut} size="sm" variant="outline">
             <ZoomOut className="h-4 w-4" />
@@ -128,7 +132,6 @@ export default function NoteEditor({
             <Edit className="h-4 w-4" />
           </Button>
         </div>
-        {/* ページナビゲーション */}
         <div className="flex items-center space-x-2">
           <Button onClick={handlePrevPage} size="sm" variant="outline" disabled={currentPage === 0}>
             <ChevronLeft className="h-4 w-4" />
@@ -138,12 +141,11 @@ export default function NoteEditor({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        {/* PDF出力ボタン */}
         <Button onClick={handleExportPDF} size="sm">
           <Download className="h-4 w-4 mr-2" /> PDF出力
         </Button>
       </div>
-      {/* フォーマットツールバー（編集モード時のみ表示） */}
+      {/* フォーマットツールバー */}
       {isEditing && (
         <div className="flex justify-center space-x-2 p-2 bg-gray-50 border-b">
           <Button
@@ -186,23 +188,26 @@ export default function NoteEditor({
           className="mx-auto"
           style={{
             width: `${100 / scale}%`,
-            maxWidth: '210mm', // A4サイズの幅
+            maxWidth: '210mm',
             transform: `scale(${scale})`,
             transformOrigin: 'top center',
           }}
         >
           <div
-            ref={noteRef}
-            dangerouslySetInnerHTML={{ __html: generatedNotes[currentPage] }}
+            ref={editorRef}
             contentEditable={isEditing}
             onKeyDown={handleKeyDown}
-            onInput={handleInput}
-            className="shadow-lg bg-white"
+            onBlur={handleBlur}
+            className="shadow-lg bg-white note-content"
             style={{
               width: '100%',
-              minHeight: '297mm', // A4サイズの高さ
+              minHeight: '297mm',
               boxSizing: 'border-box',
+              fontFamily: 'Zen Kurenaido, sans-serif',
+              fontSize: '16px',
+              lineHeight: '40px',
             }}
+            dangerouslySetInnerHTML={{ __html: generatedNotes[currentPage] }}
           />
         </div>
       </div>
