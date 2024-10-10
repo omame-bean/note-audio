@@ -77,38 +77,6 @@ const wrapPageContent = (content: string, pageNumber: number): string => {
         position: relative;
         background: linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px);
         background-size: 100% 40px;
-        background-position: 0 0;
-        outline: none;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      }
-      .note-content h1 {
-        text-align: center;
-        margin: 0 0 40px;
-        color: #1a237e;
-        font-size: 24px;
-        line-height: 40px;
-      }
-      .note-content h2 {
-        margin: 0;
-        color: #1976d2;
-        font-size: 20px;
-        line-height: 40px;
-      }
-      .note-content p, .note-content ul {
-        margin: 0;
-        padding: 0;
-      }
-      .note-content ul {
-        list-style-type: none;
-      }
-      .note-content li {
-        padding-left: 20px;
-        position: relative;
-      }
-      .note-content li::before {
-        content: '•';
-        position: absolute;
-        left: 0;
       }
       .highlight {
         background-color: yellow;

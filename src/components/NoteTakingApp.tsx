@@ -51,6 +51,14 @@ export default function NoteTakingApp() {
   const noteRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // 環境変数からAPIキーを読み込む
+  useEffect(() => {
+    const envApiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+    if (envApiKey) {
+      setApiKey(envApiKey)
+    }
+  }, [])
+
   // ノートを更新する関数
   const updateNote = (pageIndex: number, content: string) => {
     setGeneratedNotes(prevNotes => {
@@ -124,7 +132,7 @@ ${transcription}` }
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <header className="bg-white shadow-sm p-4">
-        <h1 className="text-2xl font-bold text-gray-800">AI Note Taking App</h1>
+        <h1 className="text-2xl font-bold text-gray-800">音声からノートを作るAPP</h1>
       </header>
       <main className="flex-grow flex flex-col md:flex-row p-4 space-y-4 md:space-y-0 md:space-x-4">
         {/* 左側のパネル */}

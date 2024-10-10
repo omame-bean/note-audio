@@ -25,14 +25,13 @@ export default function NoteEditor({
 }: NoteEditorProps) {
   const [scale, setScale] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
-  const [activeFormat, setActiveFormat] = useState<string | null>(null)
   const editorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (editorRef.current) {
+    if (editorRef.current && !isEditing) {
       editorRef.current.innerHTML = generatedNotes[currentPage]
     }
-  }, [currentPage, generatedNotes])
+  }, [currentPage, generatedNotes, isEditing])
 
   const handleZoomIn = () => {
     setScale(prevScale => Math.min(prevScale + 0.1, 2))
@@ -43,56 +42,50 @@ export default function NoteEditor({
   }
 
   const handleToggleEdit = () => {
-    setIsEditing(!isEditing)
-    setActiveFormat(null)
+    setIsEditing(prev => !prev)
   }
 
   const handlePrevPage = () => {
-    if (isEditing && editorRef.current) {
-      updateNote(currentPage, editorRef.current.innerHTML)
+    if (currentPage > 0) {
+      setCurrentPage(prev => prev - 1)
     }
-    setCurrentPage(prev => Math.max(prev - 1, 0))
   }
 
   const handleNextPage = () => {
-    if (isEditing && editorRef.current) {
+    if (currentPage < generatedNotes.length - 1) {
+      setCurrentPage(prev => prev + 1)
+    }
+  }
+
+  const handleExportPDFClick = () => {
+    handleExportPDF()
+  }
+
+  const applyFormat = (command: string, value: string = '') => {
+    document.execCommand(command, false, value)
+    if (editorRef.current) {
       updateNote(currentPage, editorRef.current.innerHTML)
     }
-    setCurrentPage(prev => Math.min(prev + 1, generatedNotes.length - 1))
   }
 
   const handleFormatText = (format: string) => {
-    if (!isEditing) return
+    if (!isEditing || !editorRef.current) return
 
-    setActiveFormat(prevFormat => prevFormat === format ? null : format)
-
-    const selection = window.getSelection()
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0)
-      
-      if (format === '') {
-        // フォーマット解除
-        document.execCommand('removeFormat', false, undefined)
-      } else {
-        // フォーマット適用
-        document.execCommand('styleWithCSS', false, 'true')
-        switch (format) {
-          case 'highlight':
-            document.execCommand('backColor', false, 'yellow')
-            break
-          case 'red-text':
-            document.execCommand('foreColor', false, 'red')
-            break
-          case 'blue-text':
-            document.execCommand('foreColor', false, 'blue')
-            break
-        }
-      }
-
-      // 変更を保存
-      if (editorRef.current) {
-        updateNote(currentPage, editorRef.current.innerHTML)
-      }
+    switch (format) {
+      case 'highlight':
+        applyFormat('backColor', 'yellow')
+        break
+      case 'red-text':
+        applyFormat('foreColor', 'red')
+        break
+      case 'blue-text':
+        applyFormat('foreColor', 'blue')
+        break
+      case 'removeFormat':
+        applyFormat('removeFormat')
+        break
+      default:
+        break
     }
   }
 
@@ -107,14 +100,6 @@ export default function NoteEditor({
     if (isEditing && editorRef.current) {
       updateNote(currentPage, editorRef.current.innerHTML)
     }
-  }
-
-  if (generatedNotes.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full text-gray-500">
-        ノートを生成すると、ここに表示されます。
-      </div>
-    )
   }
 
   return (
@@ -141,47 +126,29 @@ export default function NoteEditor({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button onClick={handleExportPDF} size="sm">
+        <Button onClick={handleExportPDFClick} size="sm">
           <Download className="h-4 w-4 mr-2" /> PDF出力
         </Button>
       </div>
+
       {/* フォーマットツールバー */}
       {isEditing && (
-        <div className="flex justify-center space-x-2 p-2 bg-gray-50 border-b">
-          <Button
-            onClick={() => handleFormatText('highlight')}
-            size="sm"
-            variant="outline"
-            className={`${activeFormat === 'highlight' ? 'bg-yellow-100' : ''}`}
-          >
-            <Highlighter className="h-4 w-4" />
+        <div className="flex space-x-2 p-2 bg-gray-100 border-b">
+          <Button onClick={() => handleFormatText('highlight')} size="sm" variant="outline">
+            <Highlighter className="h-4 w-4 text-yellow-500" />
           </Button>
-          <Button
-            onClick={() => handleFormatText('red-text')}
-            size="sm"
-            variant="outline"
-            className={`${activeFormat === 'red-text' ? 'bg-red-100' : ''}`}
-          >
+          <Button onClick={() => handleFormatText('red-text')} size="sm" variant="outline">
             <Type className="h-4 w-4 text-red-500" />
           </Button>
-          <Button
-            onClick={() => handleFormatText('blue-text')}
-            size="sm"
-            variant="outline"
-            className={`${activeFormat === 'blue-text' ? 'bg-blue-100' : ''}`}
-          >
+          <Button onClick={() => handleFormatText('blue-text')} size="sm" variant="outline">
             <Type className="h-4 w-4 text-blue-500" />
           </Button>
-          <Button
-            onClick={() => handleFormatText('')}
-            size="sm"
-            variant="outline"
-            className={`${activeFormat === null ? 'bg-gray-200' : ''}`}
-          >
+          <Button onClick={() => handleFormatText('removeFormat')} size="sm" variant="outline">
             <X className="h-4 w-4" />
           </Button>
         </div>
       )}
+
       {/* ノート表示エリア */}
       <div ref={containerRef} className="flex-grow overflow-auto">
         <div
@@ -203,11 +170,15 @@ export default function NoteEditor({
               width: '100%',
               minHeight: '297mm',
               boxSizing: 'border-box',
-              fontFamily: 'Zen Kurenaido, sans-serif',
+              fontFamily: '"Zen Kurenaido", sans-serif',
               fontSize: '16px',
               lineHeight: '40px',
+              padding: '0', // ここでpaddingを0に設定
+              backgroundImage: 'linear-gradient(#00b0d7 1px, transparent 1px)',
+              backgroundSize: '100% 40px',
+              backgroundPosition: '0 0',
             }}
-            dangerouslySetInnerHTML={{ __html: generatedNotes[currentPage] }}
+            suppressContentEditableWarning={true}
           />
         </div>
       </div>
