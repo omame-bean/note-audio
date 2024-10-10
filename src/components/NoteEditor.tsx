@@ -29,7 +29,7 @@ export default function NoteEditor({
 
   useEffect(() => {
     if (editorRef.current && !isEditing) {
-      editorRef.current.innerHTML = generatedNotes[currentPage]
+      editorRef.current.innerHTML = generatedNotes[currentPage] || '<p class="text-gray-400">ノートを生成してください</p>'
     }
   }, [currentPage, generatedNotes, isEditing])
 
