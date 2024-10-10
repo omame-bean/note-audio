@@ -30,6 +30,10 @@ export default function AudioRecorder({
   const [isRecording, setIsRecording] = useState(false)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const [totalRecordingTime, setTotalRecordingTime] = useState(0)
+  const [currentSessionTime, setCurrentSessionTime] = useState(0)
 
   // SpeechRecognitionの初期化と設定
   useEffect(() => {
@@ -78,13 +82,27 @@ export default function AudioRecorder({
   const handleStartRecording = () => {
     if (recognitionRef.current) {
       if (!isRecording) {
+        const remainingTime = Math.max(0, 15 * 60 - totalRecordingTime)
+        if (remainingTime === 0) {
+          setError('録音可能な最大時間（15分）に達しました。')
+          return
+        }
+
         recognitionRef.current.start()
         setIsRecording(true)
         setError(null)
-        // 15分後に録音を自動停止するタイマーを設定
+        setCurrentSessionTime(0)
+
+        // 残り時間または15分後に録音を自動停止するタイマーを設定
         recordingTimeoutRef.current = setTimeout(() => {
           handleStopRecording()
-        }, 15 * 60 * 1000)
+        }, remainingTime * 1000)
+
+        // 1秒ごとに録音時間を更新
+        recordingIntervalRef.current = setInterval(() => {
+          setCurrentSessionTime(prevTime => prevTime + 1)
+          setTotalRecordingTime(prevTotal => prevTotal + 1)
+        }, 1000)
       } else {
         handleStopRecording()
       }
@@ -101,7 +119,18 @@ export default function AudioRecorder({
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current)
       }
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current)
+      }
     }
+  }
+
+  // 残り時間を計算する関数
+  const getRemainingTime = () => {
+    const remainingSeconds = Math.max(0, 15 * 60 - totalRecordingTime)
+    const minutes = Math.floor(remainingSeconds / 60)
+    const seconds = remainingSeconds % 60
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
   // ファイルアップロードの処理
@@ -163,49 +192,75 @@ export default function AudioRecorder({
 
   // コンポーネントのレンダリング
   return (
-    <Tabs defaultValue="microphone" className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="microphone">マイク入力</TabsTrigger>
-        <TabsTrigger value="file">ファイル入力</TabsTrigger>
-      </TabsList>
-      <TabsContent value="microphone">
-        <Button onClick={handleStartRecording} className="w-full">
-          {isRecording ? (
-            <>
-              <Mic className="w-4 h-4 mr-2 animate-pulse text-red-500" />
-              録音停止
-            </>
-          ) : (
-            <>
-              <Mic className="w-4 h-4 mr-2" />
-              録音開始
-            </>
-          )}
-        </Button>
-      </TabsContent>
-      <TabsContent value="file">
-        <div className="space-y-2">
-          <Input
-            type="file"
-            accept="audio/wav,audio/mpeg"
-            onChange={handleFileUpload}
+    <div className="space-y-4">
+      <div className="bg-gray-100 p-4 rounded-lg text-sm">
+        <h3 className="font-bold mb-2">使い方と制限事項：</h3>
+        <ul className="list-disc list-inside space-y-1">
+          <li>マイク入力：最大15分間の録音が可能です。15分経過すると自動的に停止します。</li>
+          <li>ファイル入力：WAVまたはMP3形式の音声ファイル（最大25MB）をアップロードできます。</li>
+          <li>25MBは約15分の音声に相当します（音質により異なる場合があります）。</li>
+          <li>文字起こしには、OpenAI社のWhisperモデルを使用しています。</li>
+        </ul>
+      </div>
+
+      <Tabs defaultValue="microphone" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="microphone">マイク入力</TabsTrigger>
+          <TabsTrigger value="file">ファイル入力</TabsTrigger>
+        </TabsList>
+        <TabsContent value="microphone">
+          <Button 
+            onClick={handleStartRecording} 
             className="w-full"
-          />
-          <Button onClick={handleTranscribeFile} disabled={!audioFile || isTranscribing} className="w-full">
-            {isTranscribing ? (
+            disabled={totalRecordingTime >= 15 * 60}
+          >
+            {isRecording ? (
               <>
-                <Upload className="w-4 h-4 mr-2 animate-spin" />
-                文字起こし中...
+                <Mic className="w-4 h-4 mr-2 animate-pulse text-red-500" />
+                録音停止
               </>
             ) : (
               <>
-                <Upload className="w-4 h-4 mr-2" />
-                文字起こし開始
+                <Mic className="w-4 h-4 mr-2" />
+                録音開始
               </>
             )}
           </Button>
-        </div>
-      </TabsContent>
-    </Tabs>
+          <div className="mt-2 text-center">
+            {isRecording ? (
+              <>現在の録音時間: {currentSessionTime}秒</>
+            ) : (
+              <>合計録音時間: {totalRecordingTime}秒</>
+            )}
+          </div>
+          <div className="mt-2 text-center">
+            残り録音可能時間: {getRemainingTime()}
+          </div>
+        </TabsContent>
+        <TabsContent value="file">
+          <div className="space-y-2">
+            <Input
+              type="file"
+              accept="audio/wav,audio/mpeg"
+              onChange={handleFileUpload}
+              className="w-full"
+            />
+            <Button onClick={handleTranscribeFile} disabled={!audioFile || isTranscribing} className="w-full">
+              {isTranscribing ? (
+                <>
+                  <Upload className="w-4 h-4 mr-2 animate-spin" />
+                  文字起こし中...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  文字起こし開始
+                </>
+              )}
+            </Button>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }
