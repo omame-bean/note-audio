@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Bold, Type, ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download, Highlighter, X } from 'lucide-react'
+import SVGEditor from '@/components/SVGEditor'
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -12,6 +13,8 @@ interface NoteEditorProps {
   containerRef: React.RefObject<HTMLDivElement>
   handleExportPDF: () => void
   updateNote: (pageIndex: number, content: string) => void
+  svgDiagram: string | null
+  setSvgDiagram: React.Dispatch<React.SetStateAction<string | null>>
 }
 
 export default function NoteEditor({
@@ -21,7 +24,9 @@ export default function NoteEditor({
   noteRef,
   containerRef,
   handleExportPDF,
-  updateNote
+  updateNote,
+  svgDiagram,
+  setSvgDiagram
 }: NoteEditorProps) {
   const [scale, setScale] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
@@ -162,7 +167,7 @@ export default function NoteEditor({
       )}
 
       {/* ノート表示エリア */}
-      <div ref={containerRef} className="flex-grow overflow-auto">
+      <div ref={containerRef} className="flex-grow overflow-auto relative">
         <div
           className="mx-auto"
           style={{
@@ -177,7 +182,7 @@ export default function NoteEditor({
             contentEditable={isEditing}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            className="shadow-lg bg-white note-content"
+            className="shadow-lg bg-white note-content relative" // position: relative を追加
             style={{
               width: '100%',
               minHeight: '297mm',
@@ -191,7 +196,27 @@ export default function NoteEditor({
               backgroundPosition: '0 0',
             }}
             suppressContentEditableWarning={true}
-          />
+          >
+            {/* ノートのHTMLコンテンツ */}
+            {/* ... 既存のノートコンテンツ ... */}
+            {svgDiagram && (
+              <div
+                className="absolute" // 絶対配置
+                style={{
+                  left: '50px', // 例: 左から50px
+                  top: '100px',  // 例: 上から100px
+                  transform: `scale(${scale})`,
+                }}
+              >
+                <SVGEditor
+                  svgContent={svgDiagram}
+                  isEditing={isEditing}
+                  onUpdate={(newSvgContent) => setSvgDiagram(newSvgContent)}
+                  onDelete={() => setSvgDiagram(null)}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

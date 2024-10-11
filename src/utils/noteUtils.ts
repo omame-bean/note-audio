@@ -117,6 +117,8 @@ export const handleExportPDF = async (generatedNotes: string[]) => {
     pageElement.innerHTML = generatedNotes[i];
     pageElement.style.width = `${PAGE_WIDTH}mm`;
     pageElement.style.height = `${PAGE_HEIGHT}mm`;
+    pageElement.style.position = 'relative'; // 相対配置を設定
+    pageElement.style.padding = '0';
     document.body.appendChild(pageElement);
 
     const canvas = await html2canvas(pageElement, {

@@ -12,6 +12,8 @@ import AudioRecorder from '@/components/AudioRecorder'
 import NoteEditor from '@/components/NoteEditor'
 import { generateNotePages, handleExportPDF } from '@/utils/noteUtils'
 import axios from 'axios';
+import { generateSVGDiagram } from '@/utils/svgUtils'
+import SVGEditor from '@/components/SVGEditor'
 
 // プロンプトオプションの定義
 const promptOptions = [
@@ -46,6 +48,7 @@ export default function NoteTakingApp() {
   const [audioFile, setAudioFile] = useState<File | null>(null)
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [svgDiagram, setSvgDiagram] = useState<string | null>(null)
 
   // refの初期化
   const noteRef = useRef<HTMLDivElement>(null)
@@ -68,7 +71,18 @@ export default function NoteTakingApp() {
     })
   }
 
-  // ノート生成処理
+  // ノート生成後にSVG図を生成する関数
+  const generateSVGForNote = async (noteContent: string) => {
+    try {
+      const svgContent = await generateSVGDiagram(apiKey, noteContent)
+      setSvgDiagram(svgContent)
+    } catch (error) {
+      console.error('Error generating SVG diagram:', error)
+      setError('SVG図の生成中にエラーが発生しました。')
+    }
+  }
+
+  // ノート生成処理を更新
   const handleGenerateNote = async () => {
     if (!apiKey) {
       setError('APIキーが設定されていません。');
@@ -120,6 +134,9 @@ ${transcription}` }
       const generatedPages = generateNotePages(generatedContent);
       setGeneratedNotes(generatedPages);
       setCurrentPage(0);
+
+      // SVG図を生成
+      await generateSVGForNote(generatedContent);
     } catch (error) {
       console.error('Error generating note:', error);
       setError('ノート生成中にエラーが発生しました。APIキーを確認してください。');
@@ -213,6 +230,8 @@ ${transcription}` }
           containerRef={containerRef}
           handleExportPDF={() => handleExportPDF(generatedNotes)}
           updateNote={updateNote}
+          svgDiagram={svgDiagram}
+          setSvgDiagram={setSvgDiagram}
         />
       </main>
     </div>
