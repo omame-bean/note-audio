@@ -87,6 +87,12 @@ const wrapPageContent = (content: string, pageNumber: number): string => {
       .blue-text {
         color: blue;
       }
+      b, strong {
+        font-weight: bold;
+      }
+      [style*="font-size: larger"] {
+        font-size: 18px; /* 2px大きく */
+      }
       .page-number {
         position: absolute;
         bottom: 20px;

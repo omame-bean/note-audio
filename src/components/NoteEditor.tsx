@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
-import { ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download, Type, Highlighter, X } from 'lucide-react'
+import { Bold, Type, ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download, Highlighter, X } from 'lucide-react'
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -81,6 +81,12 @@ export default function NoteEditor({
       case 'blue-text':
         applyFormat('foreColor', 'blue')
         break
+      case 'bold':
+        applyFormat('bold')
+        break
+      case 'large-text':
+        applyFormat('fontSize', '5') // 2px大きくするために'4'を使用
+        break
       case 'removeFormat':
         applyFormat('removeFormat')
         break
@@ -142,6 +148,12 @@ export default function NoteEditor({
           </Button>
           <Button onClick={() => handleFormatText('blue-text')} size="sm" variant="outline">
             <Type className="h-4 w-4 text-blue-500" />
+          </Button>
+          <Button onClick={() => handleFormatText('bold')} size="sm" variant="outline">
+            <Bold className="h-4 w-4" />
+          </Button>
+          <Button onClick={() => handleFormatText('large-text')} size="sm" variant="outline">
+            <ZoomIn className="h-4 w-4" />
           </Button>
           <Button onClick={() => handleFormatText('removeFormat')} size="sm" variant="outline">
             <X className="h-4 w-4" />
