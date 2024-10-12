@@ -9,6 +9,10 @@ const PADDING_TOP = 40; // 上部のパディング（px）
 const PADDING_BOTTOM = 60; // 下部のパディング（px）
 const LINES_PER_PAGE = 28; // 1ページあたりの罫線数
 const MAX_LINES_PER_PAGE = Math.floor(LINES_PER_PAGE * 0.95); // ページの95%まで使用
+const MM_TO_PX = 3.779528; // mmをpxに変換する定数
+
+// 定数の定義
+const MARGIN = 5 // mmのマージンを設定
 
 // ノートを複数ページに分割する関数
 export const generateNotePages = (content: string): string[] => {
@@ -108,69 +112,118 @@ const wrapPageContent = (content: string, pageNumber: number): string => {
   `;
 };
 
-// PDFエクスポート処理
-export const handleExportPDF = async (generatedNotes: string[]) => {
+// PDFエクスポート処理の修正
+export const handleExportPDF = async (
+  generatedNotes: string[],
+  svgDiagram: string | null,
+  svgScale: number,
+  svgPosition: { x: number; y: number }
+) => {
+  console.log('=== handleExportPDF Start ===');
+  console.log('Generated Notes:', generatedNotes);
+  console.log('SVG Diagram:', svgDiagram);
+  console.log('SVG Scale:', svgScale);
+  console.log('SVG Position:', svgPosition);
+
   const pdf = new jsPDF('p', 'mm', 'a4');
 
   for (let i = 0; i < generatedNotes.length; i++) {
+    console.log(`--- Processing Page ${i + 1} ---`);
     const pageElement = document.createElement('div');
     pageElement.innerHTML = generatedNotes[i];
     pageElement.style.width = `${PAGE_WIDTH}mm`;
     pageElement.style.height = `${PAGE_HEIGHT}mm`;
     pageElement.style.position = 'relative';
-    pageElement.style.padding = '0';
+    pageElement.style.padding = `${MARGIN}mm`;
+    pageElement.style.boxSizing = 'border-box';
+    pageElement.style.backgroundColor = 'white';
+    pageElement.style.overflow = 'hidden';
     document.body.appendChild(pageElement);
 
-    // SVG要素を探す
-    const svgContainer = document.querySelector('.absolute') as HTMLElement;
-    if (svgContainer) {
-      const svgClone = svgContainer.cloneNode(true) as HTMLElement;
-      svgClone.style.position = 'absolute';
-      svgClone.style.left = svgContainer.style.left;
-      svgClone.style.top = svgContainer.style.top;
-      svgClone.style.transform = svgContainer.style.transform;
-      pageElement.appendChild(svgClone);
+    if (svgDiagram) {
+      console.log('Adding SVG to the page');
+      const parser = new DOMParser();
+      const svgDoc = parser.parseFromString(svgDiagram, 'image/svg+xml');
+      const svgElement = svgDoc.querySelector('svg');
+
+      if (svgElement instanceof SVGElement) {
+        const originalWidth = parseFloat(svgElement.getAttribute('width') || '400');
+        const originalHeight = parseFloat(svgElement.getAttribute('height') || '300');
+
+        console.log('Original SVG Size (px):', originalWidth, originalHeight);
+
+        // スケールを適用
+        let scaledWidth = originalWidth * svgScale;
+        let scaledHeight = originalHeight * svgScale;
+
+        console.log('Scaled SVG Size (px):', scaledWidth, scaledHeight);
+
+        let scaledWidth_mm = scaledWidth / MM_TO_PX;
+        let scaledHeight_mm = scaledHeight / MM_TO_PX;
+
+        console.log('Scaled SVG Size (mm):', scaledWidth_mm, scaledHeight_mm);
+
+        // ブラウザ上の位置をPDF上の位置に変換
+        let x_mm = svgPosition.x / MM_TO_PX;
+        let y_mm = svgPosition.y / MM_TO_PX;
+
+        console.log('Original SVG Position (mm):', x_mm, y_mm);
+
+        // SVGがページ外に出ないように位置を調整
+        const maxWidth = PAGE_WIDTH - 2 * MARGIN;
+        const maxHeight = PAGE_HEIGHT - 2 * MARGIN;
+        const scaleRatio = Math.min(maxWidth / scaledWidth_mm, maxHeight / scaledHeight_mm, 1);
+
+        if (scaleRatio < 1) {
+          scaledWidth_mm *= scaleRatio;
+          scaledHeight_mm *= scaleRatio;
+          scaledWidth *= scaleRatio;
+          scaledHeight *= scaleRatio;
+          console.log('Adjusted SVG Size (mm):', scaledWidth_mm, scaledHeight_mm);
+        }
+
+        x_mm = Math.max(MARGIN, Math.min(x_mm, PAGE_WIDTH - scaledWidth_mm - MARGIN));
+        y_mm = Math.max(MARGIN, Math.min(y_mm, PAGE_HEIGHT - scaledHeight_mm - MARGIN));
+
+        console.log('Adjusted SVG Position (mm):', x_mm, y_mm);
+
+        // SVG全体のスケールを調整するために、viewBox属性を設定し、widthとheightを指定
+        svgElement.setAttribute('viewBox', `0 0 ${originalWidth} ${originalHeight}`);
+        svgElement.setAttribute('width', `${scaledWidth_mm}mm`);
+        svgElement.setAttribute('height', `${scaledHeight_mm}mm`);
+
+        const svgString = new XMLSerializer().serializeToString(svgElement);
+        const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+
+        const svgImg = document.createElement('img');
+        svgImg.src = svgUrl;
+        svgImg.style.position = 'absolute';
+        svgImg.style.left = `${x_mm}mm`;
+        svgImg.style.top = `${y_mm}mm`;
+        svgImg.style.width = `${scaledWidth_mm}mm`;
+        svgImg.style.height = `${scaledHeight_mm}mm`;
+
+        pageElement.appendChild(svgImg);
+      } else {
+        console.warn('SVG要素が見つかりませんでした。');
+      }
     }
 
-    const canvas = await html2canvas(pageElement, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      width: PAGE_WIDTH * 3.779528,
-      height: PAGE_HEIGHT * 3.779528,
-      onclone: (clonedDoc) => {
-        const clonedSvgContainer = clonedDoc.querySelector('.absolute') as HTMLElement;
-        if (clonedSvgContainer) {
-          const svgElement = clonedSvgContainer.querySelector('svg');
-          if (svgElement) {
-            const containerRect = clonedSvgContainer.getBoundingClientRect();
-            const scale = parseFloat(clonedSvgContainer.style.transform.replace('scale(', '').replace(')', '')) || 1;
-            
-            svgElement.style.position = 'absolute';
-            svgElement.style.left = `${containerRect.left}px`;
-            svgElement.style.top = `${containerRect.top}px`;
-            svgElement.style.width = `${containerRect.width / scale}px`;
-            svgElement.style.height = `${containerRect.height / scale}px`;
-            svgElement.style.transform = `scale(${scale})`;
-            svgElement.style.transformOrigin = 'top left';
-            
-            clonedSvgContainer.style.overflow = 'visible';
-            clonedSvgContainer.style.zIndex = '1000'; // SVGを他の要素の上に表示
-          }
-        }
-      },
-      ignoreElements: (element) => {
-        // SVGコンテナ以外の絶対配置要素を無視
-        return element.classList.contains('absolute') && !element.querySelector('svg');
-      }
+    await new Promise<void>(resolve => {
+      html2canvas(pageElement, {
+        scale: 2,
+        useCORS: true,
+        logging: true,
+      }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
+        document.body.removeChild(pageElement);
+        resolve();
+      });
     });
-
-    const imgData = canvas.toDataURL('image/png', 1.0);
-    if (i > 0) pdf.addPage();
-    pdf.addImage(imgData, 'PNG', 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
-
-    document.body.removeChild(pageElement);
   }
 
   pdf.save('generated_note.pdf');
+  console.log('PDF saved successfully');
 };

@@ -5,7 +5,7 @@ import { X, ZoomIn, ZoomOut } from 'lucide-react'
 interface SVGEditorProps {
   svgContent: string
   isEditing: boolean
-  onUpdate: (newSvgContent: string) => void
+  onUpdate: (newScale: number) => void // 修正: スケールを数値として渡す
   onDelete: () => void
   scale: number
   onPositionChange: (newPosition: { x: number, y: number }) => void
@@ -16,8 +16,7 @@ export default function SVGEditor({ svgContent, isEditing, onUpdate, onDelete, s
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [showControls, setShowControls] = useState(false)
-  const [svgScale, setSvgScale] = useState(1)
-  const svgRef = useRef<SVGSVGElement>(null)
+  const svgRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -57,11 +56,13 @@ export default function SVGEditor({ svgContent, isEditing, onUpdate, onDelete, s
   }
 
   const handleZoomIn = () => {
-    setSvgScale(prevScale => Math.min(prevScale + 0.1, 2))
+    const newScale = Math.min(scale + 0.1, 2)
+    onUpdate(newScale)
   }
 
   const handleZoomOut = () => {
-    setSvgScale(prevScale => Math.max(prevScale - 0.1, 0.5))
+    const newScale = Math.max(scale - 0.1, 0.5)
+    onUpdate(newScale)
   }
 
   return (
@@ -80,12 +81,13 @@ export default function SVGEditor({ svgContent, isEditing, onUpdate, onDelete, s
     >
       <div
         style={{
-          transform: `scale(${svgScale})`,
+          transform: `scale(${scale})`,
           transformOrigin: 'top left',
           cursor: isEditing ? 'move' : 'default',
         }}
       >
         <div
+          ref={svgRef}
           dangerouslySetInnerHTML={{ __html: svgContent }}
           style={{
             width: '100%',

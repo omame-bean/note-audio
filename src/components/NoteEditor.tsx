@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Bold, Type, ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download, Highlighter, X } from 'lucide-react'
 import SVGEditor from '@/components/SVGEditor'
-import { cleanupSVGContent } from '@/utils/svgUtils'
+import { cleanupSVGContent } from '../utils/svgUtils'
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -16,6 +16,10 @@ interface NoteEditorProps {
   updateNote: (pageIndex: number, content: string) => void
   svgDiagram: string | null
   setSvgDiagram: React.Dispatch<React.SetStateAction<string | null>>
+  svgScale: number;
+  setSvgScale: React.Dispatch<React.SetStateAction<number>>;
+  svgPosition: { x: number; y: number };
+  setSvgPosition: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
 }
 
 export default function NoteEditor({
@@ -27,15 +31,15 @@ export default function NoteEditor({
   handleExportPDF,
   updateNote,
   svgDiagram,
-  setSvgDiagram
+  setSvgDiagram,
+  svgScale,
+  setSvgScale,
+  svgPosition,
+  setSvgPosition
 }: NoteEditorProps) {
   const [scale, setScale] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
-
-  // SVGの位置とスケールを管理する状態を追加
-  const [svgPosition, setSvgPosition] = useState({ x: 50, y: 100 })
-  const [svgScale, setSvgScale] = useState(1)
 
   useEffect(() => {
     if (editorRef.current && !isEditing) {
@@ -47,7 +51,6 @@ export default function NoteEditor({
   const handleZoomIn = () => {
     setScale(prevScale => {
       const newScale = Math.min(prevScale + 0.1, 2)
-      setSvgScale(newScale) // SVGのスケールも更新
       return newScale
     })
   }
@@ -55,7 +58,6 @@ export default function NoteEditor({
   const handleZoomOut = () => {
     setScale(prevScale => {
       const newScale = Math.max(prevScale - 0.1, 0.5)
-      setSvgScale(newScale) // SVGのスケールも更新
       return newScale
     })
   }
@@ -134,8 +136,13 @@ export default function NoteEditor({
   }
 
   // SVGの位置を更新する関数
-  const handleSvgPositionChange = (newPosition: { x: number, y: number }) => {
-    setSvgPosition(newPosition)
+  const handleSvgPositionChange = (newPosition: { x: number; y: number }) => {
+    setSvgPosition(newPosition) // 位置を上位コンポーネントに設定
+  }
+
+  // SVGのスケールを更新する関数
+  const handleSvgScaleUpdate = (newSvgScale: number) => {
+    setSvgScale(newSvgScale)
   }
 
   return (
@@ -230,14 +237,14 @@ export default function NoteEditor({
               style={{
                 left: `${svgPosition.x}px`,
                 top: `${svgPosition.y}px`,
-                transform: `scale(${scale})`,
+                transform: `scale(${svgScale})`,
                 transformOrigin: 'top left',
               }}
             >
               <SVGEditor
                 svgContent={svgDiagram}
                 isEditing={isEditing}
-                onUpdate={handleSetSvgDiagram}
+                onUpdate={handleSvgScaleUpdate}
                 onDelete={() => setSvgDiagram(null)}
                 scale={svgScale}
                 onPositionChange={handleSvgPositionChange}

@@ -49,6 +49,8 @@ export default function NoteTakingApp() {
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [svgDiagram, setSvgDiagram] = useState<string | null>(null)
+  const [svgScale, setSvgScale] = useState(1) // 追加
+  const [svgPosition, setSvgPosition] = useState({ x: 50, y: 100 }) // 追加
 
   // refの初期化
   const noteRef = useRef<HTMLDivElement>(null)
@@ -228,10 +230,14 @@ ${transcription}` }
           setCurrentPage={setCurrentPage}
           noteRef={noteRef}
           containerRef={containerRef}
-          handleExportPDF={() => handleExportPDF(generatedNotes)}
+          handleExportPDF={() => handleExportPDF(generatedNotes, svgDiagram, svgScale, svgPosition)} // 修正済み
           updateNote={updateNote}
           svgDiagram={svgDiagram}
           setSvgDiagram={setSvgDiagram}
+          svgScale={svgScale} // 追加
+          setSvgScale={setSvgScale} // 追加
+          svgPosition={svgPosition} // 追加
+          setSvgPosition={setSvgPosition} // 追加
         />
       </main>
     </div>
