@@ -142,7 +142,11 @@ export default function NoteEditor({
 
   const handleSetSvgDiagram = (newSvgContent: string) => {
     const cleanedSvgContent = cleanupSVGContent(newSvgContent)
-    setSvgDiagrams(cleanedSvgContent)
+    setSvgDiagrams(prevDiagrams => {
+      const newDiagrams = [...prevDiagrams];
+      newDiagrams[currentPage] = cleanedSvgContent;
+      return newDiagrams;
+    });
   }
 
   // SVGの位置を更新する関数
