@@ -8,7 +8,7 @@ const LINE_HEIGHT = 40; // 1行の高さ（px）
 const PADDING_TOP = 40; // 上部のパディング（px）
 const PADDING_BOTTOM = 60; // 下部のパディング（px）
 const LINES_PER_PAGE = 28; // 1ページあたりの罫線数
-const MAX_LINES_PER_PAGE = Math.floor(LINES_PER_PAGE * 0.95); // ページの95%まで使用
+const MAX_LINES_PER_PAGE = Math.floor(LINES_PER_PAGE * 0.9); // ページの90%まで使用
 const MM_TO_PX = 3.779528; // mmをpxに変換する定数
 
 // 定数の定義
@@ -115,15 +115,15 @@ const wrapPageContent = (content: string, pageNumber: number): string => {
 // PDFエクスポート処理の修正
 export const handleExportPDF = async (
   generatedNotes: string[],
-  svgDiagram: string | null,
-  svgScale: number,
-  svgPosition: { x: number; y: number }
+  svgDiagrams: (string | null)[],
+  svgScales: number[],
+  svgPositions: { x: number; y: number }[]
 ) => {
   console.log('=== handleExportPDF Start ===');
   console.log('Generated Notes:', generatedNotes);
-  console.log('SVG Diagram:', svgDiagram);
-  console.log('SVG Scale:', svgScale);
-  console.log('SVG Position:', svgPosition);
+  console.log('SVG Diagrams:', svgDiagrams);
+  console.log('SVG Scales:', svgScales);
+  console.log('SVG Positions:', svgPositions);
 
   const pdf = new jsPDF('p', 'mm', 'a4');
 
@@ -140,73 +140,20 @@ export const handleExportPDF = async (
     pageElement.style.overflow = 'hidden';
     document.body.appendChild(pageElement);
 
-    if (svgDiagram) {
-      console.log('Adding SVG to the page');
-      const parser = new DOMParser();
-      const svgDoc = parser.parseFromString(svgDiagram, 'image/svg+xml');
-      const svgElement = svgDoc.querySelector('svg');
+    if (svgDiagrams[i]) {
+      // 現在のページのSVGを追加
+      const svgDiagram = svgDiagrams[i];
+      const svgScale = svgScales[i];
+      const svgPosition = svgPositions[i];
 
-      if (svgElement instanceof SVGElement) {
-        const originalWidth = parseFloat(svgElement.getAttribute('width') || '400');
-        const originalHeight = parseFloat(svgElement.getAttribute('height') || '300');
-
-        console.log('Original SVG Size (px):', originalWidth, originalHeight);
-
-        // スケールを適用
-        let scaledWidth = originalWidth * svgScale;
-        let scaledHeight = originalHeight * svgScale;
-
-        console.log('Scaled SVG Size (px):', scaledWidth, scaledHeight);
-
-        let scaledWidth_mm = scaledWidth / MM_TO_PX;
-        let scaledHeight_mm = scaledHeight / MM_TO_PX;
-
-        console.log('Scaled SVG Size (mm):', scaledWidth_mm, scaledHeight_mm);
-
-        // ブラウザ上の位置をPDF上の位置に変換
-        let x_mm = svgPosition.x / MM_TO_PX;
-        let y_mm = svgPosition.y / MM_TO_PX;
-
-        console.log('Original SVG Position (mm):', x_mm, y_mm);
-
-        // SVGがページ外に出ないように位置を調整
-        const maxWidth = PAGE_WIDTH - 2 * MARGIN;
-        const maxHeight = PAGE_HEIGHT - 2 * MARGIN;
-        const scaleRatio = Math.min(maxWidth / scaledWidth_mm, maxHeight / scaledHeight_mm, 1);
-
-        if (scaleRatio < 1) {
-          scaledWidth_mm *= scaleRatio;
-          scaledHeight_mm *= scaleRatio;
-          scaledWidth *= scaleRatio;
-          scaledHeight *= scaleRatio;
-          console.log('Adjusted SVG Size (mm):', scaledWidth_mm, scaledHeight_mm);
-        }
-
-        x_mm = Math.max(MARGIN, Math.min(x_mm, PAGE_WIDTH - scaledWidth_mm - MARGIN));
-        y_mm = Math.max(MARGIN, Math.min(y_mm, PAGE_HEIGHT - scaledHeight_mm - MARGIN));
-
-        console.log('Adjusted SVG Position (mm):', x_mm, y_mm);
-
-        // SVG全体のスケールを調整するために、viewBox属性を設定し、widthとheightを指定
-        svgElement.setAttribute('viewBox', `0 0 ${originalWidth} ${originalHeight}`);
-        svgElement.setAttribute('width', `${scaledWidth_mm}mm`);
-        svgElement.setAttribute('height', `${scaledHeight_mm}mm`);
-
-        const svgString = new XMLSerializer().serializeToString(svgElement);
-        const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
-
-        const svgImg = document.createElement('img');
-        svgImg.src = svgUrl;
-        svgImg.style.position = 'absolute';
-        svgImg.style.left = `${x_mm}mm`;
-        svgImg.style.top = `${y_mm}mm`;
-        svgImg.style.width = `${scaledWidth_mm}mm`;
-        svgImg.style.height = `${scaledHeight_mm}mm`;
-
-        pageElement.appendChild(svgImg);
-      } else {
-        console.warn('SVG要素が見つかりませんでした。');
-      }
+      const svgElement = document.createElement('div');
+      svgElement.innerHTML = svgDiagram!;
+      svgElement.style.position = 'absolute';
+      svgElement.style.left = `${svgPosition.x}px`;
+      svgElement.style.top = `${svgPosition.y}px`;
+      svgElement.style.transform = `scale(${svgScale})`;
+      svgElement.style.transformOrigin = 'top left';
+      pageElement.appendChild(svgElement);
     }
 
     await new Promise<void>(resolve => {

@@ -51,6 +51,9 @@ export default function NoteTakingApp() {
   const [svgDiagram, setSvgDiagram] = useState<string | null>(null)
   const [svgScale, setSvgScale] = useState(1) // 追加
   const [svgPosition, setSvgPosition] = useState({ x: 50, y: 100 }) // 追加
+  const [svgDiagrams, setSvgDiagrams] = useState<(string | null)[]>([])
+  const [svgScales, setSvgScales] = useState<number[]>([])
+  const [svgPositions, setSvgPositions] = useState<{ x: number; y: number }[]>([])
 
   // refの初期化
   const noteRef = useRef<HTMLDivElement>(null)
@@ -77,7 +80,9 @@ export default function NoteTakingApp() {
   const generateSVGForNote = async (noteContent: string) => {
     try {
       const svgContent = await generateSVGDiagram(apiKey, noteContent)
-      setSvgDiagram(svgContent)
+      setSvgDiagrams(prevDiagrams => [...prevDiagrams, svgContent])
+      setSvgScales(prevScales => [...prevScales, 1])
+      setSvgPositions(prevPositions => [...prevPositions, { x: 50, y: 100 }])
     } catch (error) {
       console.error('Error generating SVG diagram:', error)
       setError('SVG図の生成中にエラーが発生しました。')
@@ -230,14 +235,14 @@ ${transcription}` }
           setCurrentPage={setCurrentPage}
           noteRef={noteRef}
           containerRef={containerRef}
-          handleExportPDF={() => handleExportPDF(generatedNotes, svgDiagram, svgScale, svgPosition)} // 修正済み
+          handleExportPDF={() => handleExportPDF(generatedNotes, svgDiagrams, svgScales, svgPositions)}
           updateNote={updateNote}
-          svgDiagram={svgDiagram}
-          setSvgDiagram={setSvgDiagram}
-          svgScale={svgScale} // 追加
-          setSvgScale={setSvgScale} // 追加
-          svgPosition={svgPosition} // 追加
-          setSvgPosition={setSvgPosition} // 追加
+          svgDiagrams={svgDiagrams}
+          setSvgDiagrams={setSvgDiagrams}
+          svgScales={svgScales}
+          setSvgScales={setSvgScales}
+          svgPositions={svgPositions}
+          setSvgPositions={setSvgPositions}
         />
       </main>
     </div>

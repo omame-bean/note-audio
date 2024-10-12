@@ -14,12 +14,12 @@ interface NoteEditorProps {
   containerRef: React.RefObject<HTMLDivElement>
   handleExportPDF: () => void
   updateNote: (pageIndex: number, content: string) => void
-  svgDiagram: string | null
-  setSvgDiagram: React.Dispatch<React.SetStateAction<string | null>>
-  svgScale: number;
-  setSvgScale: React.Dispatch<React.SetStateAction<number>>;
-  svgPosition: { x: number; y: number };
-  setSvgPosition: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
+  svgDiagrams: (string | null)[]
+  setSvgDiagrams: React.Dispatch<React.SetStateAction<(string | null)[]>> // Changed from setSvgDiagram
+  svgScales: number[]
+  setSvgScales: React.Dispatch<React.SetStateAction<number[]>> // Changed from setSvgScale
+  svgPositions: { x: number; y: number }[]
+  setSvgPositions: React.Dispatch<React.SetStateAction<{ x: number; y: number }[]>> // Changed from setSvgPosition
 }
 
 export default function NoteEditor({
@@ -30,12 +30,12 @@ export default function NoteEditor({
   containerRef,
   handleExportPDF,
   updateNote,
-  svgDiagram,
-  setSvgDiagram,
-  svgScale,
-  setSvgScale,
-  svgPosition,
-  setSvgPosition
+  svgDiagrams,
+  setSvgDiagrams,
+  svgScales,
+  setSvgScales,
+  svgPositions,
+  setSvgPositions
 }: NoteEditorProps) {
   const [scale, setScale] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
@@ -63,19 +63,29 @@ export default function NoteEditor({
   }
 
   const handleToggleEdit = () => {
+    if (isEditing && editorRef.current) {
+      updateNote(currentPage, editorRef.current.innerHTML)
+    }
     setIsEditing(prev => !prev)
-    // ノートの編集状態が変わってもSVGの編集状態は変更しない
   }
 
   const handlePrevPage = () => {
     if (currentPage > 0) {
+      if (isEditing && editorRef.current) {
+        updateNote(currentPage, editorRef.current.innerHTML)
+      }
       setCurrentPage(prev => prev - 1)
+      setIsEditing(false)
     }
   }
 
   const handleNextPage = () => {
     if (currentPage < generatedNotes.length - 1) {
+      if (isEditing && editorRef.current) {
+        updateNote(currentPage, editorRef.current.innerHTML)
+      }
       setCurrentPage(prev => prev + 1)
+      setIsEditing(false)
     }
   }
 
@@ -132,17 +142,34 @@ export default function NoteEditor({
 
   const handleSetSvgDiagram = (newSvgContent: string) => {
     const cleanedSvgContent = cleanupSVGContent(newSvgContent)
-    setSvgDiagram(cleanedSvgContent)
+    setSvgDiagrams(cleanedSvgContent)
   }
 
   // SVGの位置を更新する関数
   const handleSvgPositionChange = (newPosition: { x: number; y: number }) => {
-    setSvgPosition(newPosition) // 位置を上位コンポーネントに設定
+    setSvgPositions(prevPositions => {
+      const newPositions = [...prevPositions];
+      newPositions[currentPage] = newPosition;
+      return newPositions;
+    });
   }
 
   // SVGのスケールを更新する関数
   const handleSvgScaleUpdate = (newSvgScale: number) => {
-    setSvgScale(newSvgScale)
+    setSvgScales(prevScales => {
+      const newScales = [...prevScales];
+      newScales[currentPage] = newSvgScale;
+      return newScales;
+    });
+  }
+
+  // SVGを削除する関数
+  const handleSvgDelete = () => {
+    setSvgDiagrams(prevDiagrams => {
+      const newDiagrams = [...prevDiagrams];
+      newDiagrams[currentPage] = null;
+      return newDiagrams;
+    });
   }
 
   return (
@@ -216,37 +243,39 @@ export default function NoteEditor({
             onBlur={handleBlur}
             className="shadow-lg bg-white note-content relative"
             style={{
-              width: '100%',
+              width: '210mm',
               minHeight: '297mm',
+              padding: '40px 20px 60px',
               boxSizing: 'border-box',
               fontFamily: '"Zen Kurenaido", sans-serif',
               fontSize: '16px',
               lineHeight: '40px',
-              padding: '0', // ここでpaddingを0に設定
-              backgroundImage: 'linear-gradient(#00b0d7 1px, transparent 1px)',
+              background: 'linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px)',
               backgroundSize: '100% 40px',
-              backgroundPosition: '0 0',
+              backgroundAttachment: 'local',
+              overflow: 'hidden',
+              wordWrap: 'break-word', // 長い単語を折り返す
             }}
             suppressContentEditableWarning={true}
           >
             {/* ノートのHTMLコンテンツ */}
           </div>
-          {svgDiagram && (
+          {svgDiagrams[currentPage] && (
             <div
               className="absolute"
               style={{
-                left: `${svgPosition.x}px`,
-                top: `${svgPosition.y}px`,
-                transform: `scale(${svgScale})`,
+                left: `${svgPositions[currentPage].x}px`,
+                top: `${svgPositions[currentPage].y}px`,
+                transform: `scale(${svgScales[currentPage]})`,
                 transformOrigin: 'top left',
               }}
             >
               <SVGEditor
-                svgContent={svgDiagram}
+                svgContent={svgDiagrams[currentPage]!}
                 isEditing={isEditing}
                 onUpdate={handleSvgScaleUpdate}
-                onDelete={() => setSvgDiagram(null)}
-                scale={svgScale}
+                onDelete={handleSvgDelete}
+                scale={svgScales[currentPage]}
                 onPositionChange={handleSvgPositionChange}
               />
             </div>
