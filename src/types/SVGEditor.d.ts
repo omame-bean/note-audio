@@ -4,8 +4,10 @@ declare module '@/components/SVGEditor' {
   interface SVGEditorProps {
     svgContent: string;
     isEditing: boolean;
-    onUpdate: (newSvgContent: string) => void;
+    onUpdate: (newSvgScale: number) => void;
     onDelete: () => void;
+    scale: number;
+    onPositionChange: (newPosition: { x: number; y: number }) => void;
   }
 
   const SVGEditor: React.FC<SVGEditorProps>;
