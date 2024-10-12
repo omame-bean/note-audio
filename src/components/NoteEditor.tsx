@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Bold, Type, ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download, Highlighter, X } from 'lucide-react'
 import SVGEditor from '@/components/SVGEditor'
+import { cleanupSVGContent } from '@/utils/svgUtils'
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -32,22 +33,36 @@ export default function NoteEditor({
   const [isEditing, setIsEditing] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
 
+  // SVGの位置とスケールを管理する状態を追加
+  const [svgPosition, setSvgPosition] = useState({ x: 50, y: 100 })
+  const [svgScale, setSvgScale] = useState(1)
+
   useEffect(() => {
     if (editorRef.current && !isEditing) {
       editorRef.current.innerHTML = generatedNotes[currentPage] || '<p class="text-gray-400">ノートを生成してください</p>'
     }
   }, [currentPage, generatedNotes, isEditing])
 
+  // ズーム処理を更新
   const handleZoomIn = () => {
-    setScale(prevScale => Math.min(prevScale + 0.1, 2))
+    setScale(prevScale => {
+      const newScale = Math.min(prevScale + 0.1, 2)
+      setSvgScale(newScale) // SVGのスケールも更新
+      return newScale
+    })
   }
 
   const handleZoomOut = () => {
-    setScale(prevScale => Math.max(prevScale - 0.1, 0.5))
+    setScale(prevScale => {
+      const newScale = Math.max(prevScale - 0.1, 0.5)
+      setSvgScale(newScale) // SVGのスケールも更新
+      return newScale
+    })
   }
 
   const handleToggleEdit = () => {
     setIsEditing(prev => !prev)
+    // ノートの編集状態が変わってもSVGの編集状態は変更しない
   }
 
   const handlePrevPage = () => {
@@ -111,6 +126,16 @@ export default function NoteEditor({
     if (isEditing && editorRef.current) {
       updateNote(currentPage, editorRef.current.innerHTML)
     }
+  }
+
+  const handleSetSvgDiagram = (newSvgContent: string) => {
+    const cleanedSvgContent = cleanupSVGContent(newSvgContent)
+    setSvgDiagram(cleanedSvgContent)
+  }
+
+  // SVGの位置を更新する関数
+  const handleSvgPositionChange = (newPosition: { x: number, y: number }) => {
+    setSvgPosition(newPosition)
   }
 
   return (
@@ -182,7 +207,7 @@ export default function NoteEditor({
             contentEditable={isEditing}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            className="shadow-lg bg-white note-content relative" // position: relative を追加
+            className="shadow-lg bg-white note-content relative"
             style={{
               width: '100%',
               minHeight: '297mm',
@@ -198,25 +223,27 @@ export default function NoteEditor({
             suppressContentEditableWarning={true}
           >
             {/* ノートのHTMLコンテンツ */}
-            {/* ... 既存のノートコンテンツ ... */}
-            {svgDiagram && (
-              <div
-                className="absolute" // 絶対配置
-                style={{
-                  left: '50px', // 例: 左から50px
-                  top: '100px',  // 例: 上から100px
-                  transform: `scale(${scale})`,
-                }}
-              >
-                <SVGEditor
-                  svgContent={svgDiagram}
-                  isEditing={isEditing}
-                  onUpdate={(newSvgContent) => setSvgDiagram(newSvgContent)}
-                  onDelete={() => setSvgDiagram(null)}
-                />
-              </div>
-            )}
           </div>
+          {svgDiagram && (
+            <div
+              className="absolute"
+              style={{
+                left: `${svgPosition.x}px`,
+                top: `${svgPosition.y}px`,
+                transform: `scale(${scale})`,
+                transformOrigin: 'top left',
+              }}
+            >
+              <SVGEditor
+                svgContent={svgDiagram}
+                isEditing={isEditing}
+                onUpdate={handleSetSvgDiagram}
+                onDelete={() => setSvgDiagram(null)}
+                scale={svgScale}
+                onPositionChange={handleSvgPositionChange}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -117,21 +117,57 @@ export const handleExportPDF = async (generatedNotes: string[]) => {
     pageElement.innerHTML = generatedNotes[i];
     pageElement.style.width = `${PAGE_WIDTH}mm`;
     pageElement.style.height = `${PAGE_HEIGHT}mm`;
-    pageElement.style.position = 'relative'; // 相対配置を設定
+    pageElement.style.position = 'relative';
     pageElement.style.padding = '0';
     document.body.appendChild(pageElement);
+
+    // SVG要素を探す
+    const svgContainer = document.querySelector('.absolute') as HTMLElement;
+    if (svgContainer) {
+      const svgClone = svgContainer.cloneNode(true) as HTMLElement;
+      svgClone.style.position = 'absolute';
+      svgClone.style.left = svgContainer.style.left;
+      svgClone.style.top = svgContainer.style.top;
+      svgClone.style.transform = svgContainer.style.transform;
+      pageElement.appendChild(svgClone);
+    }
 
     const canvas = await html2canvas(pageElement, {
       scale: 2,
       useCORS: true,
       logging: false,
-      width: PAGE_WIDTH * 3.779528, // 1mmあたり約3.779528ピクセル（72dpi）
-      height: PAGE_HEIGHT * 3.779528
+      width: PAGE_WIDTH * 3.779528,
+      height: PAGE_HEIGHT * 3.779528,
+      onclone: (clonedDoc) => {
+        const clonedSvgContainer = clonedDoc.querySelector('.absolute') as HTMLElement;
+        if (clonedSvgContainer) {
+          const svgElement = clonedSvgContainer.querySelector('svg');
+          if (svgElement) {
+            const containerRect = clonedSvgContainer.getBoundingClientRect();
+            const scale = parseFloat(clonedSvgContainer.style.transform.replace('scale(', '').replace(')', '')) || 1;
+            
+            svgElement.style.position = 'absolute';
+            svgElement.style.left = `${containerRect.left}px`;
+            svgElement.style.top = `${containerRect.top}px`;
+            svgElement.style.width = `${containerRect.width / scale}px`;
+            svgElement.style.height = `${containerRect.height / scale}px`;
+            svgElement.style.transform = `scale(${scale})`;
+            svgElement.style.transformOrigin = 'top left';
+            
+            clonedSvgContainer.style.overflow = 'visible';
+            clonedSvgContainer.style.zIndex = '1000'; // SVGを他の要素の上に表示
+          }
+        }
+      },
+      ignoreElements: (element) => {
+        // SVGコンテナ以外の絶対配置要素を無視
+        return element.classList.contains('absolute') && !element.querySelector('svg');
+      }
     });
 
-    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+    const imgData = canvas.toDataURL('image/png', 1.0);
     if (i > 0) pdf.addPage();
-    pdf.addImage(imgData, 'JPEG', 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
+    pdf.addImage(imgData, 'PNG', 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
 
     document.body.removeChild(pageElement);
   }
