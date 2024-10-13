@@ -16,6 +16,19 @@ const USABLE_PAGE_HEIGHT = PAGE_HEIGHT * MM_TO_PX - PADDING_TOP - PADDING_BOTTOM
 // 定数の定義を更新
 const MARGIN = 5 // 左右のマージンを5mmに設定
 
+// 画像の読み込みを待つヘルパー関数を追加
+const waitForImages = (element: HTMLElement): Promise<void> => {
+  const images = Array.from(element.getElementsByTagName('img'));
+  const promises = images.map(img => {
+    if (img.complete) return Promise.resolve();
+    return new Promise(resolve => {
+      img.onload = resolve;
+      img.onerror = resolve; // エラー時も続行
+    });
+  });
+  return Promise.all(promises).then(() => {});
+};
+
 // ノートを複数ページに分割する関数
 export const generateNotePages = (content: string): string[] => {
   const tempDiv = document.createElement('div');
@@ -160,20 +173,26 @@ export const handleExportPDF = async (
   generatedNotes: string[],
   svgDiagrams: (string | null)[],
   svgScales: number[],
-  svgPositions: { x: number; y: number }[]
+  svgPositions: { x: number; y: number }[],
+  generatedImages: (string | null)[],
+  imageScales: number[],
+  imagePositions: { x: number; y: number }[]
 ) => {
   console.log('=== handleExportPDF Start ===');
   console.log('Generated Notes:', generatedNotes);
   console.log('SVG Diagrams:', svgDiagrams);
   console.log('SVG Scales:', svgScales);
   console.log('SVG Positions:', svgPositions);
+  console.log('Generated Images:', generatedImages);
+  console.log('Image Scales:', imageScales);
+  console.log('Image Positions:', imagePositions);
 
   const pdf = new jsPDF('p', 'mm', 'a4');
 
   for (let i = 0; i < generatedNotes.length; i++) {
     console.log(`--- Processing Page ${i + 1} ---`);
     const pageElement = document.createElement('div');
-    pageElement.innerHTML = generatedNotes[i];
+    pageElement.innerHTML = generatedNotes[i] || '';
     pageElement.style.width = `${PAGE_WIDTH}mm`;
     pageElement.style.height = `${PAGE_HEIGHT}mm`;
     pageElement.style.position = 'relative';
@@ -186,8 +205,8 @@ export const handleExportPDF = async (
     if (svgDiagrams[i]) {
       // 現在のページのSVGを追加
       const svgDiagram = svgDiagrams[i];
-      const svgScale = svgScales[i];
-      const svgPosition = svgPositions[i];
+      const svgScale = svgScales[i] || 1;
+      const svgPosition = svgPositions[i] || { x: 0, y: 0 };
 
       const svgElement = document.createElement('div');
       svgElement.innerHTML = svgDiagram!;
@@ -198,6 +217,28 @@ export const handleExportPDF = async (
       svgElement.style.transformOrigin = 'top left';
       pageElement.appendChild(svgElement);
     }
+
+    // 画像の処理を追加
+    if (generatedImages[i]) {
+      const imageUrl = generatedImages[i];
+      const imageScale = imageScales[i] || 1;
+      const imagePosition = imagePositions[i] || { x: 0, y: 0 };
+
+      const imageElement = document.createElement('img');
+      imageElement.src = imageUrl!;
+      imageElement.style.position = 'absolute';
+      imageElement.style.left = `${imagePosition.x}px`;
+      imageElement.style.top = `${imagePosition.y}px`;
+      imageElement.style.width = '512px'; // 幅を512pxに固定
+      imageElement.style.height = '512px'; // 高さを512pxに固定
+      imageElement.style.transform = `scale(${imageScale})`;
+      imageElement.style.transformOrigin = 'top left';
+      imageElement.crossOrigin = 'anonymous'; // CORS設定
+      pageElement.appendChild(imageElement);
+    }
+
+    // すべての画像が読み込まれるまで待機
+    await waitForImages(pageElement);
 
     await new Promise<void>(resolve => {
       html2canvas(pageElement, {

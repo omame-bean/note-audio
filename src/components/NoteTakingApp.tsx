@@ -52,6 +52,9 @@ export default function NoteTakingApp() {
   const [svgDiagrams, setSvgDiagrams] = useState<(string | null)[]>([])
   const [svgScales, setSvgScales] = useState<number[]>([])
   const [svgPositions, setSvgPositions] = useState<{ x: number; y: number }[]>([])
+  const [generatedImages, setGeneratedImages] = useState<(string | null)[]>([])
+  const [imageScales, setImageScales] = useState<number[]>([])
+  const [imagePositions, setImagePositions] = useState<{ x: number; y: number }[]>([])
 
   // refの初期化
   const noteRef = useRef<HTMLDivElement>(null)
@@ -108,6 +111,11 @@ export default function NoteTakingApp() {
       const generatedPages = generateNotePages(generatedContent);
       setGeneratedNotes(generatedPages);
       setCurrentPage(0);
+
+      // 初期化: 画像のスケールと位置を各ページに設定
+      setGeneratedImages(Array(generatedPages.length).fill(null))
+      setImageScales(Array(generatedPages.length).fill(1))
+      setImagePositions(Array(generatedPages.length).fill({ x: 100, y: 100 }))
 
       // SVG図を生成
       await generateSVGForNote(generatedContent);
@@ -185,7 +193,6 @@ export default function NoteTakingApp() {
           setCurrentPage={setCurrentPage}
           noteRef={noteRef}
           containerRef={containerRef}
-          handleExportPDF={() => handleExportPDF(generatedNotes, svgDiagrams, svgScales, svgPositions)}
           updateNote={updateNote}
           svgDiagrams={svgDiagrams}
           setSvgDiagrams={setSvgDiagrams}
@@ -194,6 +201,12 @@ export default function NoteTakingApp() {
           svgPositions={svgPositions}
           setSvgPositions={setSvgPositions}
           setError={setError}
+          generatedImages={generatedImages}
+          setGeneratedImages={setGeneratedImages}
+          imageScales={imageScales}
+          setImageScales={setImageScales}
+          imagePositions={imagePositions}
+          setImagePositions={setImagePositions}
         />
       </main>
     </div>

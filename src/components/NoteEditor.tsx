@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Bold, Type, ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download, Highlighter, X, Loader2 } from 'lucide-react'
 import SVGEditor from '@/components/SVGEditor'
 import { cleanupSVGContent, generateSVGDiagram } from '../utils/svgUtils'
+import { generateImage } from '../utils/imageUtils'
+import Image from 'next/image'
+import ImageEditor from './ImageEditor'
+import { handleExportPDF as exportPDF } from '../utils/noteUtils'
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -12,7 +16,6 @@ interface NoteEditorProps {
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>
   noteRef: React.RefObject<HTMLDivElement>
   containerRef: React.RefObject<HTMLDivElement>
-  handleExportPDF: () => void
   updateNote: (pageIndex: number, content: string) => void
   svgDiagrams: (string | null)[]
   setSvgDiagrams: React.Dispatch<React.SetStateAction<(string | null)[]>>
@@ -21,6 +24,12 @@ interface NoteEditorProps {
   svgPositions: { x: number; y: number }[]
   setSvgPositions: React.Dispatch<React.SetStateAction<{ x: number; y: number }[]>>
   setError: React.Dispatch<React.SetStateAction<string | null>>
+  generatedImages: (string | null)[]
+  setGeneratedImages: React.Dispatch<React.SetStateAction<(string | null)[]>>
+  imageScales: number[] // 追加
+  setImageScales: React.Dispatch<React.SetStateAction<number[]>> // 追加
+  imagePositions: { x: number; y: number }[] // 追加
+  setImagePositions: React.Dispatch<React.SetStateAction<{ x: number; y: number }[]>> // 追加
 }
 
 export default function NoteEditor({
@@ -29,7 +38,6 @@ export default function NoteEditor({
   setCurrentPage,
   noteRef,
   containerRef,
-  handleExportPDF,
   updateNote,
   svgDiagrams,
   setSvgDiagrams,
@@ -38,13 +46,22 @@ export default function NoteEditor({
   svgPositions,
   setSvgPositions,
   setError,
+  generatedImages,
+  setGeneratedImages,
+  imageScales,
+  setImageScales,
+  imagePositions,
+  setImagePositions,
 }: NoteEditorProps) {
+  // useStateを使用してスケールを定義
   const [scale, setScale] = useState(1)
+
   const [isEditing, setIsEditing] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
 
-  // 追加: SVG生成中の状態管理
+  // SVG生成中の状態管理
   const [isGeneratingSVG, setIsGeneratingSVG] = useState(false)
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false)
 
   useEffect(() => {
     if (editorRef.current && !isEditing) {
@@ -52,10 +69,38 @@ export default function NoteEditor({
     }
   }, [currentPage, generatedNotes, isEditing])
 
+  // 初期化時に各ページの画像スケールと位置を設定
+  useEffect(() => {
+    const initializeImageState = () => {
+      if (generatedImages.length > 0) {
+        setImageScales(prev => {
+          const newScales = [...prev]
+          for (let i = 0; i < generatedImages.length; i++) {
+            if (newScales[i] === undefined) {
+              newScales[i] = 1
+            }
+          }
+          return newScales
+        })
+        setImagePositions(prev => {
+          const newPositions = [...prev]
+          for (let i = 0; i < generatedImages.length; i++) {
+            if (newPositions[i] === undefined) {
+              newPositions[i] = { x: 100, y: 100 }
+            }
+          }
+          return newPositions
+        })
+      }
+    }
+    initializeImageState()
+  }, [generatedImages])
+
   // ズーム処理を更新
   const handleZoomIn = () => {
     setScale(prevScale => {
       const newScale = Math.min(prevScale + 0.1, 2)
+      console.log('Zoom In: ', newScale)
       return newScale
     })
   }
@@ -63,6 +108,7 @@ export default function NoteEditor({
   const handleZoomOut = () => {
     setScale(prevScale => {
       const newScale = Math.max(prevScale - 0.1, 0.5)
+      console.log('Zoom Out: ', newScale)
       return newScale
     })
   }
@@ -95,7 +141,23 @@ export default function NoteEditor({
   }
 
   const handleExportPDFClick = () => {
-    handleExportPDF()
+    // 配列の長さを生成ノートに合わせて統一
+    const maxLength = generatedNotes.length
+
+    // 配列を必要な長さに拡張
+    const extendArray = <T,>(arr: T[], defaultValue: T): T[] => {
+      return arr.length >= maxLength ? arr : [...arr, ...Array(maxLength - arr.length).fill(defaultValue)]
+    }
+
+    exportPDF(
+      extendArray(generatedNotes, ''),
+      extendArray(svgDiagrams, null),
+      extendArray(svgScales, 1),
+      extendArray(svgPositions, { x: 0, y: 0 }),
+      extendArray(generatedImages, null),
+      extendArray(imageScales, 1),
+      extendArray(imagePositions, { x: 0, y: 0 })
+    )
   }
 
   const applyFormat = (command: string, value: string = '') => {
@@ -148,37 +210,37 @@ export default function NoteEditor({
   const handleSetSvgDiagram = (newSvgContent: string) => {
     const cleanedSvgContent = cleanupSVGContent(newSvgContent)
     setSvgDiagrams(prevDiagrams => {
-      const newDiagrams = [...prevDiagrams];
-      newDiagrams[currentPage] = cleanedSvgContent;
-      return newDiagrams;
-    });
+      const newDiagrams = [...prevDiagrams]
+      newDiagrams[currentPage] = cleanedSvgContent
+      return newDiagrams
+    })
   }
 
   // SVGの位置を更新する関数
   const handleSvgPositionChange = (newPosition: { x: number; y: number }) => {
     setSvgPositions(prevPositions => {
-      const newPositions = [...prevPositions];
-      newPositions[currentPage] = newPosition;
-      return newPositions;
-    });
+      const newPositions = [...prevPositions]
+      newPositions[currentPage] = newPosition
+      return newPositions
+    })
   }
 
   // SVGのスケールを更新する関数
   const handleSvgScaleUpdate = (newSvgScale: number) => {
     setSvgScales(prevScales => {
-      const newScales = [...prevScales];
-      newScales[currentPage] = newSvgScale;
-      return newScales;
-    });
+      const newScales = [...prevScales]
+      newScales[currentPage] = newSvgScale
+      return newScales
+    })
   }
 
   // SVGを削除する関数
   const handleSvgDelete = () => {
     setSvgDiagrams(prevDiagrams => {
-      const newDiagrams = [...prevDiagrams];
-      newDiagrams[currentPage] = null;
-      return newDiagrams;
-    });
+      const newDiagrams = [...prevDiagrams]
+      newDiagrams[currentPage] = null
+      return newDiagrams
+    })
   }
 
   // 選択されたテキストを取得する関数
@@ -233,6 +295,62 @@ export default function NoteEditor({
     }
   }
 
+  // 画像生成ハンドラーを追加
+  const handleGenerateImage = async () => {
+    const selectedText = getSelectedText()
+    if (!selectedText) {
+      setError('テキストが選択されていません。')
+      return
+    }
+
+    // プロンプトの長さを制限（例：1000文字）
+    const truncatedPrompt = selectedText.slice(0, 1000)
+
+    setIsGeneratingImage(true)
+
+    try {
+      const imageUrl = await generateImage(truncatedPrompt)
+      
+      setGeneratedImages(prevImages => {
+        const newImages = [...prevImages]
+        newImages[currentPage] = imageUrl
+        return newImages
+      })
+    } catch (error) {
+      console.error('画像の生成中にエラーが発生しました:', error)
+      setError('画像の生成中にエラーが発生しました。')
+    } finally {
+      setIsGeneratingImage(false)
+    }
+  }
+
+  // 画像のスケールを更新する関数
+  const handleImageScaleUpdate = (newImageScale: number) => {
+    setImageScales(prevScales => {
+      const newScales = [...prevScales]
+      newScales[currentPage] = newImageScale
+      return newScales
+    })
+  }
+
+  // 画像の位置を更新する関数
+  const handleImagePositionChange = (newPosition: { x: number; y: number }) => {
+    setImagePositions(prevPositions => {
+      const newPositions = [...prevPositions]
+      newPositions[currentPage] = newPosition
+      return newPositions
+    })
+  }
+
+  // 画像を削除する関数
+  const handleImageDelete = () => {
+    setGeneratedImages(prevImages => {
+      const newImages = [...prevImages]
+      newImages[currentPage] = null
+      return newImages
+    })
+  }
+
   return (
     <div className="w-full md:w-2/3 bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
       {/* ツールバー */}
@@ -259,6 +377,19 @@ export default function NoteEditor({
               <Loader2 className="animate-spin h-4 w-4" /> // ローディングスピナーを表示
             ) : (
               '図を生成'
+            )}
+          </Button>
+          <Button 
+            onClick={handleGenerateImage} 
+            size="sm" 
+            variant="outline" 
+            className="ml-2" 
+            disabled={isGeneratingImage}
+          >
+            {isGeneratingImage ? (
+              <Loader2 className="animate-spin h-4 w-4" />
+            ) : (
+              '画像を生成'
             )}
           </Button>
         </div>
@@ -363,6 +494,18 @@ export default function NoteEditor({
                 onPositionChange={handleSvgPositionChange}
               />
             </div>
+          )}
+          {generatedImages[currentPage] && (
+            <ImageEditor
+              imageUrl={generatedImages[currentPage]!}
+              isEditing={isEditing}
+              onUpdate={handleImageScaleUpdate}
+              onDelete={handleImageDelete}
+              scale={imageScales[currentPage] || 1}
+              onPositionChange={handleImagePositionChange}
+              parentScale={scale} // 親のスケールを渡す
+              initialPosition={imagePositions[currentPage] || { x: 100, y: 100 }} // 追加
+            />
           )}
         </div>
       </div>
