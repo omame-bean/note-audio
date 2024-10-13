@@ -43,8 +43,6 @@ export default function NoteTakingApp() {
   const [generatedNotes, setGeneratedNotes] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const [apiKey, setApiKey] = useState('')
-  const [showApiKey, setShowApiKey] = useState(false)
   const [audioFile, setAudioFile] = useState<File | null>(null)
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -59,14 +57,6 @@ export default function NoteTakingApp() {
   const noteRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // 環境変数からAPIキーを読み込む
-  useEffect(() => {
-    const envApiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
-    if (envApiKey) {
-      setApiKey(envApiKey)
-    }
-  }, [])
-
   // ノートを更新する関数
   const updateNote = (pageIndex: number, content: string) => {
     setGeneratedNotes(prevNotes => {
@@ -79,6 +69,10 @@ export default function NoteTakingApp() {
   // ノート生成後にSVG図を生成する関数
   const generateSVGForNote = async (noteContent: string) => {
     try {
+      const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+      if (!apiKey) {
+        throw new Error('APIキーが設定されていません。')
+      }
       const svgContent = await generateSVGDiagram(apiKey, noteContent)
       setSvgDiagrams(prevDiagrams => [...prevDiagrams, svgContent])
       setSvgScales(prevScales => [...prevScales, 1])
@@ -91,10 +85,6 @@ export default function NoteTakingApp() {
 
   // ノート生成処理を更新
   const handleGenerateNote = async () => {
-    if (!apiKey) {
-      setError('APIキーが設定されていません。');
-      return;
-    }
     if (!transcription || !selectedPrompt) {
       setError('文字起こしとプロンプトの両方が必要です。');
       return;
@@ -104,35 +94,12 @@ export default function NoteTakingApp() {
     setError(null);
 
     try {
-      const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: 'あなたは優秀なノートテイカーです。与えられた文字起こしを整理し、読みやすくまとめてください。HTMLタグを使用して構造化してください。' },
-            { role: 'user', content: `以下の文字起こしを「${promptOptions.find(p => p.value === selectedPrompt)?.label}」というプロンプトに基づいてまとめてください。以下の指示に従ってください：
+      const response = await axios.post('/api/generate-note', {
+        transcription,
+        selectedPrompt,
+      });
 
-1. 内容に応じた適切なタイトルをh1タグで1つだけつけてください。"会議ノート"などの一般的なタイトルは避けてください。
-2. 内容を簡潔に要約し、重要なポイントを箇条書きでまとめてください。
-3. 適切な見出しを使用して構造化してください。
-4. リストや段落を適切に使用し、読みやすく整形してください。
-5. マークダウン記法ではなく、HTMLタグを使用してフォーマットしてください。
-6. コードブロックや "バッククォート3つ + html" のような記述は使用しないでください。
-
-文字起こし：
-
-${transcription}` }
-          ],
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      let generatedContent = response.data.choices[0].message.content;
+      let generatedContent = response.data.content;
       
       // 生成されたコンテンツをクリーンアップ
       generatedContent = cleanGeneratedContent(generatedContent);
@@ -146,11 +113,14 @@ ${transcription}` }
       await generateSVGForNote(generatedContent);
     } catch (error) {
       console.error('Error generating note:', error);
-      setError('ノート生成中にエラーが発生しました。APIキーを確認してください。');
+      setError('ノート生成中にエラーが発生しました。');
     } finally {
       setIsGenerating(false);
     }
   }
+
+  // APIキーを環境変数から取得
+  const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || '';
 
   // コンポーネントのレンダリング
   return (
@@ -161,35 +131,15 @@ ${transcription}` }
       <main className="flex-grow flex flex-col md:flex-row p-4 space-y-4 md:space-y-0 md:space-x-4">
         {/* 左側のパネル */}
         <div className="w-full md:w-1/3 bg-white rounded-lg shadow-md p-4 space-y-4">
-          {/* APIキー入力フィールド */}
-          <div className="relative">
-            <Input
-              type={showApiKey ? "text" : "password"}
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="OpenAI APIキーを入力"
-              className="pr-10"
-            />
-            <button
-              onClick={() => setShowApiKey(!showApiKey)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-            >
-              {showApiKey ? (
-                <EyeOffIcon className="h-4 w-4 text-gray-400" />
-              ) : (
-                <EyeIcon className="h-4 w-4 text-gray-400" />
-              )}
-            </button>
-          </div>
           {/* 音声録音コンポーネント */}
           <AudioRecorder
             setTranscription={setTranscription}
             setError={setError}
-            apiKey={apiKey}
             audioFile={audioFile}
             setAudioFile={setAudioFile}
             isTranscribing={isTranscribing}
             setIsTranscribing={setIsTranscribing}
+            apiKey={apiKey} // apiKeyプロパティを追加
           />
           {/* エラー表示 */}
           {error && (
@@ -222,7 +172,7 @@ ${transcription}` }
           {/* ノート生成ボタン */}
           <Button 
             onClick={handleGenerateNote} 
-            disabled={!transcription || !selectedPrompt || !apiKey || isGenerating} 
+            disabled={!transcription || !selectedPrompt || isGenerating} 
             className="w-full"
           >
             {isGenerating ? 'ノート生成中...' : 'ノート生成'}
