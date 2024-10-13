@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
-import { Bold, Type, ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download, Highlighter, X } from 'lucide-react'
+import { Bold, Type, ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download, Highlighter, X, Loader2 } from 'lucide-react'
 import SVGEditor from '@/components/SVGEditor'
-import { cleanupSVGContent } from '../utils/svgUtils'
+import { cleanupSVGContent, generateSVGDiagram } from '../utils/svgUtils'
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -15,11 +15,12 @@ interface NoteEditorProps {
   handleExportPDF: () => void
   updateNote: (pageIndex: number, content: string) => void
   svgDiagrams: (string | null)[]
-  setSvgDiagrams: React.Dispatch<React.SetStateAction<(string | null)[]>> // Changed from setSvgDiagram
+  setSvgDiagrams: React.Dispatch<React.SetStateAction<(string | null)[]>>
   svgScales: number[]
-  setSvgScales: React.Dispatch<React.SetStateAction<number[]>> // Changed from setSvgScale
+  setSvgScales: React.Dispatch<React.SetStateAction<number[]>>
   svgPositions: { x: number; y: number }[]
-  setSvgPositions: React.Dispatch<React.SetStateAction<{ x: number; y: number }[]>> // Changed from setSvgPosition
+  setSvgPositions: React.Dispatch<React.SetStateAction<{ x: number; y: number }[]>>
+  setError: React.Dispatch<React.SetStateAction<string | null>>
 }
 
 export default function NoteEditor({
@@ -35,11 +36,15 @@ export default function NoteEditor({
   svgScales,
   setSvgScales,
   svgPositions,
-  setSvgPositions
+  setSvgPositions,
+  setError,
 }: NoteEditorProps) {
   const [scale, setScale] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
+
+  // 追加: SVG生成中の状態管理
+  const [isGeneratingSVG, setIsGeneratingSVG] = useState(false)
 
   useEffect(() => {
     if (editorRef.current && !isEditing) {
@@ -117,7 +122,7 @@ export default function NoteEditor({
         applyFormat('bold')
         break
       case 'large-text':
-        applyFormat('fontSize', '5') // 2px大きくするために'4'を使用
+        applyFormat('fontSize', '5') // 2px大きくするために'5'を使用
         break
       case 'removeFormat':
         applyFormat('removeFormat')
@@ -176,6 +181,58 @@ export default function NoteEditor({
     });
   }
 
+  // 選択されたテキストを取得する関数
+  const getSelectedText = (): string => {
+    if (editorRef.current) {
+      const selection = window.getSelection()
+      if (selection && selection.rangeCount > 0) {
+        return selection.toString()
+      }
+    }
+    return ''
+  }
+
+  // SVG図を生成するハンドラーを追加
+  const handleGenerateSVG = async () => {
+    const selectedText = getSelectedText()
+    if (!selectedText) {
+      setError('テキストが選択されていません。')
+      return
+    }
+
+    setIsGeneratingSVG(true) // 生成開始時に状態を設定
+
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+      if (!apiKey) {
+        throw new Error('APIキーが設定されていません。')
+      }
+      const svgContent = await generateSVGDiagram(apiKey, selectedText)
+      
+      // 現在のページにSVG図を設定
+      setSvgDiagrams(prevDiagrams => {
+        const newDiagrams = [...prevDiagrams]
+        newDiagrams[currentPage] = svgContent
+        return newDiagrams
+      })
+      setSvgScales(prevScales => {
+        const newScales = [...prevScales]
+        newScales[currentPage] = 1
+        return newScales
+      })
+      setSvgPositions(prevPositions => {
+        const newPositions = [...prevPositions]
+        newPositions[currentPage] = { x: 50, y: 100 }
+        return newPositions
+      })
+    } catch (error) {
+      console.error('SVG図の生成中にエラーが発生しました:', error)
+      setError('SVG図の生成中にエラーが発生しました。')
+    } finally {
+      setIsGeneratingSVG(false) // 生成終了時に状態をリセット
+    }
+  }
+
   return (
     <div className="w-full md:w-2/3 bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
       {/* ツールバー */}
@@ -189,6 +246,20 @@ export default function NoteEditor({
           </Button>
           <Button onClick={handleToggleEdit} size="sm" variant="outline">
             <Edit className="h-4 w-4" />
+          </Button>
+          {/* SVG生成ボタンにローディングインジケーターを追加 */}
+          <Button 
+            onClick={handleGenerateSVG} 
+            size="sm" 
+            variant="outline" 
+            className="ml-2" 
+            disabled={isGeneratingSVG} // 生成中はボタンを無効化
+          >
+            {isGeneratingSVG ? (
+              <Loader2 className="animate-spin h-4 w-4" /> // ローディングスピナーを表示
+            ) : (
+              '図を生成'
+            )}
           </Button>
         </div>
         <div className="flex items-center space-x-2">
@@ -238,6 +309,8 @@ export default function NoteEditor({
             maxWidth: '210mm',
             transform: `scale(${scale})`,
             transformOrigin: 'top center',
+            height: '297mm', // 高さをA4サイズに固定
+            overflow: 'hidden', // オーバーフローを隠す
           }}
         >
           <div
@@ -248,8 +321,8 @@ export default function NoteEditor({
             className="shadow-lg bg-white note-content relative"
             style={{
               width: '210mm',
-              minHeight: '297mm',
-              padding: '40px 20px 60px',
+              height: '297mm', // 高さをA4サイズに固定
+              padding: '40px 20px 60px', // 修正: パディングを60pxに統一
               boxSizing: 'border-box',
               fontFamily: '"Zen Kurenaido", sans-serif',
               fontSize: '16px',
@@ -257,7 +330,7 @@ export default function NoteEditor({
               background: 'linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px)',
               backgroundSize: '100% 40px',
               backgroundAttachment: 'local',
-              overflow: 'hidden',
+              overflow: 'hidden', // オーバーフローを隠す
               wordWrap: 'break-word', // 長い単語を折り返す
             }}
             suppressContentEditableWarning={true}

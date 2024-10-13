@@ -96,7 +96,7 @@ export default function SVGEditor({ svgContent, isEditing, onUpdate, onDelete, s
         />
       </div>
       {isEditing && showControls && (
-        <div className="absolute top-0 right-0 flex space-x-1">
+        <div className="absolute top-0 left-0 flex space-x-1">
           <Button size="sm" variant="outline" onClick={handleZoomIn}>
             <ZoomIn className="h-4 w-4" />
           </Button>

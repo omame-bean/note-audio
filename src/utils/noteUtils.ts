@@ -7,9 +7,11 @@ const PAGE_WIDTH = 210; // A4サイズの幅（mm）
 const LINE_HEIGHT = 40; // 1行の高さ（px）
 const PADDING_TOP = 40; // 上部のパディング（px）
 const PADDING_BOTTOM = 60; // 下部のパディング（px）
-const LINES_PER_PAGE = 28; // 1ページあたりの罫線数
-const MAX_LINES_PER_PAGE = Math.floor(LINES_PER_PAGE * 0.9); // ページの90%まで使用
+const LINE_PER_PAGE = 25; // 1ページあたりの最大行数
 const MM_TO_PX = 3.779528; // mmをpxに変換する定数
+
+// 使用可能なページの高さ
+const USABLE_PAGE_HEIGHT = PAGE_HEIGHT * MM_TO_PX - PADDING_TOP - PADDING_BOTTOM;
 
 // 定数の定義
 const MARGIN = 5 // mmのマージンを設定
@@ -22,22 +24,39 @@ export const generateNotePages = (content: string): string[] => {
 
   const pages: string[] = [];
   let currentPage = '';
-  let currentLines = 0;
+  let currentHeight = 0; // ページの現在の高さを追跡
 
   elements.forEach((element) => {
-    const elementContent = element.outerHTML;
-    const elementLines = getElementLines(element);
-    
-    if (currentLines + elementLines > MAX_LINES_PER_PAGE) {
-      if (currentLines > 0) {
-        pages.push(wrapPageContent(currentPage, pages.length));
-        currentPage = '';
-        currentLines = 0;
+    if (element.tagName.toLowerCase() === 'ul') {
+      // <ul>要素の処理を追加
+      const ulHtml = element.outerHTML;
+      const ulHeight = estimateElementHeight(element);
+
+      if (currentHeight + ulHeight > USABLE_PAGE_HEIGHT) {
+        if (currentHeight > 0) {
+          pages.push(wrapPageContent(currentPage, pages.length));
+          currentPage = '';
+          currentHeight = 0;
+        }
       }
+
+      currentPage += ulHtml;
+      currentHeight += ulHeight;
+    } else {
+      const elementHtml = element.outerHTML;
+      const elementHeight = estimateElementHeight(element);
+
+      if (currentHeight + elementHeight > USABLE_PAGE_HEIGHT) { // 修正: 使用可能なページ高さを使用
+        if (currentHeight > 0) {
+          pages.push(wrapPageContent(currentPage, pages.length));
+          currentPage = '';
+          currentHeight = 0;
+        }
+      }
+
+      currentPage += elementHtml;
+      currentHeight += elementHeight;
     }
-    
-    currentPage += elementContent;
-    currentLines += elementLines;
   });
 
   if (currentPage) {
@@ -47,23 +66,35 @@ export const generateNotePages = (content: string): string[] => {
   return pages;
 };
 
-// 要素の行数を推定する関数
-const getElementLines = (element: Element): number => {
-  const content = element.textContent || '';
-  const lines = Math.ceil(content.length / 40); // 40文字で1行と仮定
+// 要素の高さをピクセルで推定する関数
+const estimateElementHeight = (element: Element): number => {
+  const style = window.getComputedStyle(element);
+  const fontSize = parseFloat(style.fontSize || '16'); // デフォルトフォントサイズ
+  const lineHeight = parseFloat(style.lineHeight || '40'); // デフォルトラインハイト
+
+  let height = 0;
 
   switch (element.tagName.toLowerCase()) {
     case 'h1':
-      return 2; // h1は2行分
+      height += lineHeight * 2;
+      break;
     case 'h2':
-      return 1; // h2は1行分
+      height += lineHeight * 1.5;
+      break;
     case 'ul':
-      return element.children.length; // リストの各項目を1行とカウント
+      height += element.children.length * lineHeight;
+      break;
     case 'p':
-      return lines;
+      const text = element.textContent || '';
+      const lines = Math.ceil(text.length / 40); // 40文字で1行と仮定
+      height += lines * lineHeight;
+      break;
     default:
-      return 1;
+      height += lineHeight;
+      break;
   }
+
+  return height;
 };
 
 // ページコンテンツをHTMLでラップする関数
@@ -75,8 +106,8 @@ const wrapPageContent = (content: string, pageNumber: number): string => {
         font-family: 'Zen Kurenaido', sans-serif;
         font-size: 16px;
         line-height: 40px;
-        padding: 40px 20px 20px;
-        width: 210mm;
+        padding: 0; /* 修正: paddingを0に変更 */
+        width: 200mm; /* 修正: 幅を200mmに変更 */
         height: 297mm;
         position: relative;
         background: linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px);
@@ -96,6 +127,7 @@ const wrapPageContent = (content: string, pageNumber: number): string => {
       }
       [style*="font-size: larger"] {
         font-size: 18px; /* 2px大きく */
+        line-height: 1.0;
       }
       .page-number {
         position: absolute;
@@ -134,7 +166,7 @@ export const handleExportPDF = async (
     pageElement.style.width = `${PAGE_WIDTH}mm`;
     pageElement.style.height = `${PAGE_HEIGHT}mm`;
     pageElement.style.position = 'relative';
-    pageElement.style.padding = `${MARGIN}mm`;
+    pageElement.style.padding = `0mm ${MARGIN}mm 0mm`; // 修正: PADDING_TOPとPADDING_BOTTOMを0に変更
     pageElement.style.boxSizing = 'border-box';
     pageElement.style.backgroundColor = 'white';
     pageElement.style.overflow = 'hidden';

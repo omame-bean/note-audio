@@ -61,3 +61,5 @@ ${noteContent}
     throw new Error('SVG図の生成中にエラーが発生しました。')
   }
 }
+
+// 必要に応じてコメントや関数を確認

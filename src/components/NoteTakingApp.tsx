@@ -193,6 +193,7 @@ export default function NoteTakingApp() {
           setSvgScales={setSvgScales}
           svgPositions={svgPositions}
           setSvgPositions={setSvgPositions}
+          setError={setError}
         />
       </main>
     </div>
