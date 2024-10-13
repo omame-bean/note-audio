@@ -134,7 +134,7 @@ export default function NoteTakingApp() {
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <header className="bg-white shadow-sm p-4">
-        <h1 className="text-2xl font-bold text-gray-800">音声からノートを作るAPP</h1>
+        <h1 className="text-2xl font-bold text-gray-800">音声からノートが作れるアプリ</h1>
       </header>
       <main className="flex-grow flex flex-col md:flex-row p-4 space-y-4 md:space-y-0 md:space-x-4">
         {/* 左側のパネル */}

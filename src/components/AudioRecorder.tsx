@@ -34,6 +34,14 @@ export default function AudioRecorder({
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const [totalRecordingTime, setTotalRecordingTime] = useState(0)
   const [currentSessionTime, setCurrentSessionTime] = useState(0)
+  
+  // トグル用の状態
+  const [isManualVisible, setIsManualVisible] = useState(false)
+
+  // トグル関数
+  const toggleManual = () => {
+    setIsManualVisible(!isManualVisible)
+  }
 
   // SpeechRecognitionの初期化と設定
   useEffect(() => {
@@ -193,16 +201,66 @@ export default function AudioRecorder({
   // コンポーネントのレンダリング
   return (
     <div className="space-y-4">
+      {/* 使い方と制限事項セクション */}
       <div className="bg-gray-100 p-4 rounded-lg text-sm">
-        <h3 className="font-bold mb-2">使い方と制限事項：</h3>
-        <ul className="list-disc list-inside space-y-1">
-          <li>マイク入力：最大15分間の録音が可能です。15分経過すると自動的に停止します。</li>
-          <li>ファイル入力：WAVまたはMP3形式の音声ファイル（最大25MB）をアップロードできます。</li>
-          <li>25MBは約15分の音声に相当します（音質により異なる場合があります）。</li>
-          <li>文字起こしには、OpenAI社のWhisperモデルを使用しています。</li>
-        </ul>
+        <h3 
+          className="font-bold mb-2 cursor-pointer flex justify-between items-center"
+          onClick={toggleManual}
+        >
+          <span>使い方と制限事項</span>
+          <span>
+            {isManualVisible ? '▲' : '▼'}
+          </span>
+        </h3>
+        {isManualVisible && (
+          <div className="mt-2">
+            <p className="mb-2">このアプリの使い方について、以下に詳細を説明します。各機能を順にご確認ください。</p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>
+                <strong>マイク入力:</strong>
+                <p className="ml-4">マイクアイコンをクリックして録音を開始します。録音は最大15分間行え、制限時間に達すると自動的に停止します。録音中は現在の録音時間と合計録音時間が表示されます。</p>
+              </li>
+              <li>
+                <strong>ファイル入力:</strong>
+                <p className="ml-4">WAVまたはMP3形式の音声ファイル（最大25MB）をアップロードできます。アップロード後、「文字起こし開始」ボタンをクリックして音声ファイルの文字起こしを行います。</p>
+              </li>
+              <li>
+                <strong>文字起こし結果:</strong>
+                <p className="ml-4">音声入力またはファイル入力から得られた文字起こし結果はテキストエリアに表示されます。必要に応じて修正や編集が可能です。</p>
+              </li>
+              <li>
+                <strong>ノート生成:</strong>
+                <p className="ml-4">文字起こし結果に基づいてノートを生成します。プロンプトを選択し、「ノート生成」ボタンをクリックすると、整理されたノートが右側のエディタに表示されます。</p>
+              </li>
+              <li>
+                <strong>ノート編集:</strong>
+                <p className="ml-4">生成されたノートは編集可能です。フォーマットツールバーを使用してテキストの装飾やレイアウトの調整ができます。</p>
+              </li>
+              <li>
+                <strong>図および画像の追加:</strong>
+                <p className="ml-4">ノートに視覚的な要素を追加するために、SVG図や画像を生成して配置できます。生成するためには、生成したい箇所のノートのテキストを選択した状態で、図を生成するには「図を生成」ボタンを、画像を生成するには「画像を生成」ボタンを使用します。それぞれの図や画像はドラッグ＆ドロップで移動可能です。また、拡大縮小もできます。</p>
+              </li>
+              <li>
+                <strong>PDF出力:</strong>
+                <p className="ml-4">完成したノートはPDF形式でエクスポートできます。ツールバーのPDF出力ボタンをクリックすると、ノート全体が一つのPDFファイルとしてダウンロードされます。</p>
+              </li>
+              <li>
+                <strong>制限事項:</strong>
+                <ul className="list-disc list-inside ml-8">
+                  <li>図と画像は1ページにつき、それぞれ1つまでの設置が可能です。それを超えると上書きされます。</li>
+                  <li>録音時間は最大15分までです。</li>
+                  <li>アップロード可能な音声ファイルのサイズは25MBまでです。</li>
+                  <li>文字起こしにはインターネット接続が必要です。</li>
+                  <li>ブラウザによっては音声認識機能がサポートされていない場合があります。</li>
+                </ul>
+              </li>
+            </ol>
+            <p className="mt-2">ご不明な点がございましたら、お気軽にお問い合わせください。</p>
+          </div>
+        )}
       </div>
 
+      {/* タブコンテンツなど他のコンポーネント */}
       <Tabs defaultValue="microphone" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="microphone">マイク入力</TabsTrigger>
