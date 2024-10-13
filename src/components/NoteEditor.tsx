@@ -53,8 +53,8 @@ export default function NoteEditor({
   imagePositions,
   setImagePositions,
 }: NoteEditorProps) {
-  // useStateを使用してスケールを定義
-  const [scale, setScale] = useState(1)
+  // スケールの初期値を0.9に設定
+  const [scale, setScale] = useState(0.9)
 
   const [isEditing, setIsEditing] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
@@ -243,18 +243,33 @@ export default function NoteEditor({
     })
   }
 
-  // 選択されたテキストを取得する関数
-  const getSelectedText = (): string => {
-    if (editorRef.current) {
-      const selection = window.getSelection()
-      if (selection && selection.rangeCount > 0) {
-        return selection.toString()
-      }
-    }
-    return ''
+  // 画像のスケールを更新する関数
+  const handleImageScaleUpdate = (newImageScale: number) => {
+    setImageScales(prevScales => {
+      const newScales = [...prevScales]
+      newScales[currentPage] = newImageScale
+      return newScales
+    })
   }
 
-  // SVG図を生成するハンドラーを追加
+  // 画像の位置を更新する関数
+  const handleImagePositionChange = (newPosition: { x: number; y: number }) => {
+    setImagePositions(prevPositions => {
+      const newPositions = [...prevPositions]
+      newPositions[currentPage] = newPosition
+      return newPositions
+    })
+  }
+
+  // 画像を削除する関数
+  const handleImageDelete = () => {
+    setGeneratedImages(prevImages => {
+      const newImages = [...prevImages]
+      newImages[currentPage] = null
+      return newImages
+    })
+  }
+
   const handleGenerateSVG = async () => {
     const selectedText = getSelectedText()
     if (!selectedText) {
@@ -295,7 +310,6 @@ export default function NoteEditor({
     }
   }
 
-  // 画像生成ハンドラーを追加
   const handleGenerateImage = async () => {
     const selectedText = getSelectedText()
     if (!selectedText) {
@@ -324,38 +338,22 @@ export default function NoteEditor({
     }
   }
 
-  // 画像のスケールを更新する関数
-  const handleImageScaleUpdate = (newImageScale: number) => {
-    setImageScales(prevScales => {
-      const newScales = [...prevScales]
-      newScales[currentPage] = newImageScale
-      return newScales
-    })
-  }
-
-  // 画像の位置を更新する関数
-  const handleImagePositionChange = (newPosition: { x: number; y: number }) => {
-    setImagePositions(prevPositions => {
-      const newPositions = [...prevPositions]
-      newPositions[currentPage] = newPosition
-      return newPositions
-    })
-  }
-
-  // 画像を削除する関数
-  const handleImageDelete = () => {
-    setGeneratedImages(prevImages => {
-      const newImages = [...prevImages]
-      newImages[currentPage] = null
-      return newImages
-    })
+  // 選択されたテキストを取得する関数
+  const getSelectedText = (): string => {
+    if (editorRef.current) {
+      const selection = window.getSelection()
+      if (selection && selection.rangeCount > 0) {
+        return selection.toString()
+      }
+    }
+    return ''
   }
 
   return (
     <div className="w-full md:w-2/3 bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
       {/* ツールバー */}
-      <div className="flex justify-between items-center p-4 bg-gray-50 border-b">
-        <div className="flex space-x-2">
+      <div className="flex flex-wrap justify-between items-center p-4 bg-gray-50 border-b">
+        <div className="flex flex-wrap space-x-2 mb-2 sm:mb-0">
           <Button onClick={handleZoomOut} size="sm" variant="outline">
             <ZoomOut className="h-4 w-4" />
           </Button>
@@ -365,16 +363,15 @@ export default function NoteEditor({
           <Button onClick={handleToggleEdit} size="sm" variant="outline">
             <Edit className="h-4 w-4" />
           </Button>
-          {/* SVG生成ボタンにローディングインジケーターを追加 */}
           <Button 
             onClick={handleGenerateSVG} 
             size="sm" 
             variant="outline" 
             className="ml-2" 
-            disabled={isGeneratingSVG} // 生成中はボタンを無効化
+            disabled={isGeneratingSVG}
           >
             {isGeneratingSVG ? (
-              <Loader2 className="animate-spin h-4 w-4" /> // ローディングスピナーを表示
+              <Loader2 className="animate-spin h-4 w-4" />
             ) : (
               '図を生成'
             )}
@@ -393,16 +390,16 @@ export default function NoteEditor({
             )}
           </Button>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 mt-2 sm:mt-0">
           <Button onClick={handlePrevPage} size="sm" variant="outline" disabled={currentPage === 0}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm font-medium">{currentPage + 1} / {generatedNotes.length}</span>
+          <span className="text-sm font-medium whitespace-nowrap">{currentPage + 1} / {generatedNotes.length}</span>
           <Button onClick={handleNextPage} size="sm" variant="outline" disabled={currentPage === generatedNotes.length - 1}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button onClick={handleExportPDFClick} size="sm">
+        <Button onClick={handleExportPDFClick} size="sm" className="mt-2 sm:mt-0">
           <Download className="h-4 w-4 mr-2" /> PDF出力
         </Button>
       </div>
@@ -432,16 +429,19 @@ export default function NoteEditor({
       )}
 
       {/* ノート表示エリア */}
-      <div ref={containerRef} className="flex-grow overflow-auto relative">
+      <div ref={containerRef} className="flex-grow overflow-auto relative bg-gray-200 py-4">
         <div
-          className="mx-auto"
+          className="w-full"
           style={{
-            width: `${100 / scale}%`,
             maxWidth: '210mm',
             transform: `scale(${scale})`,
-            transformOrigin: 'top center',
+            transformOrigin: 'top left',
             height: '297mm',
-            overflow: 'hidden',
+            overflow: 'visible',
+            border: '2px solid #00b0d7', // 境界を明確にするためのボーダー追加
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // 輪郭を際立たせるためのシャドウ追加
+            backgroundColor: '#fff', // 背景色を白に設定
+            minWidth: '210mm',
           }}
         >
           <div

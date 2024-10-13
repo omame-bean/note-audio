@@ -132,11 +132,9 @@ export default function NoteTakingApp() {
 
   // コンポーネントのレンダリング
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      <header className="bg-white shadow-sm p-4">
-        <h1 className="text-2xl font-bold text-gray-800">音声からノートが作れるアプリ</h1>
-      </header>
-      <main className="flex-grow flex flex-col md:flex-row p-4 space-y-4 md:space-y-0 md:space-x-4">
+    <div className="flex flex-col min-h-screen bg-gray-100">
+      {/* ヘッダーを削除し、上部の余白を追加 */}
+      <main className="flex-grow flex flex-col md:flex-row p-8 space-y-4 md:space-y-0 md:space-x-4">
         {/* 左側のパネル */}
         <div className="w-full md:w-1/3 bg-white rounded-lg shadow-md p-4 space-y-4">
           {/* 音声録音コンポーネント */}
@@ -147,7 +145,7 @@ export default function NoteTakingApp() {
             setAudioFile={setAudioFile}
             isTranscribing={isTranscribing}
             setIsTranscribing={setIsTranscribing}
-            apiKey={apiKey} // apiKeyプロパティを追加
+            apiKey={apiKey}
           />
           {/* エラー表示 */}
           {error && (
