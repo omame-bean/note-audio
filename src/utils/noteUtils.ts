@@ -107,7 +107,7 @@ const wrapPageContent = (content: string, pageNumber: number): string => {
         font-size: 16px;
         line-height: 40px;
         padding: 0; /* 修正: paddingを0に変更 */
-        width: 200mm; /* 修正: 幅を200mmに変更 */
+        width: 210mm;
         height: 297mm;
         position: relative;
         background: linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px);
@@ -166,7 +166,7 @@ export const handleExportPDF = async (
     pageElement.style.width = `${PAGE_WIDTH}mm`;
     pageElement.style.height = `${PAGE_HEIGHT}mm`;
     pageElement.style.position = 'relative';
-    pageElement.style.padding = `0mm ${MARGIN}mm 0mm`; // 修正: PADDING_TOPとPADDING_BOTTOMを0に変更
+    pageElement.style.padding = `${0}mm ${MARGIN}mm ${0}mm`; // 修正: PADDING_TOPとPADDING_BOTTOMを0に変更
     pageElement.style.boxSizing = 'border-box';
     pageElement.style.backgroundColor = 'white';
     pageElement.style.overflow = 'hidden';
