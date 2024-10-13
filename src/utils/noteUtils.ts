@@ -13,8 +13,8 @@ const MM_TO_PX = 3.779528; // mmをpxに変換する定数
 // 使用可能なページの高さ
 const USABLE_PAGE_HEIGHT = PAGE_HEIGHT * MM_TO_PX - PADDING_TOP - PADDING_BOTTOM;
 
-// 定数の定義
-const MARGIN = 5 // mmのマージンを設定
+// 定数の定義を更新
+const MARGIN = 5 // 左右のマージンを5mmに設定
 
 // ノートを複数ページに分割する関数
 export const generateNotePages = (content: string): string[] => {
@@ -97,7 +97,7 @@ const estimateElementHeight = (element: Element): number => {
   return height;
 };
 
-// ページコンテンツをHTMLでラップする関数
+// ページコンテンツをHTMLでラップする関数を更新
 const wrapPageContent = (content: string, pageNumber: number): string => {
   return `
     <style>
@@ -106,12 +106,21 @@ const wrapPageContent = (content: string, pageNumber: number): string => {
         font-family: 'Zen Kurenaido', sans-serif;
         font-size: 16px;
         line-height: 40px;
-        padding: 0; /* 修正: paddingを0に変更 */
         width: 210mm;
         height: 297mm;
         position: relative;
         background: linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px);
         background-size: 100% 40px;
+        background-position: 0 -4px; /* 背景の罫線を4px下に移動 */
+        box-sizing: border-box;
+      }
+      .note-content-inner {
+        width: 200mm;
+        margin: 0 auto;
+        padding: 0 5mm;
+        box-sizing: border-box;
+        position: relative;
+        top: -4px; /* コンテンツを4px上に移動 */
       }
       .highlight {
         background-color: yellow;
@@ -138,7 +147,9 @@ const wrapPageContent = (content: string, pageNumber: number): string => {
       }
     </style>
     <div class="note-content">
-      ${content}
+      <div class="note-content-inner">
+        ${content}
+      </div>
       <div class="page-number">- ${pageNumber + 1} -</div>
     </div>
   `;
@@ -166,7 +177,7 @@ export const handleExportPDF = async (
     pageElement.style.width = `${PAGE_WIDTH}mm`;
     pageElement.style.height = `${PAGE_HEIGHT}mm`;
     pageElement.style.position = 'relative';
-    pageElement.style.padding = `${0}mm ${MARGIN}mm ${0}mm`; // 修正: PADDING_TOPとPADDING_BOTTOMを0に変更
+    pageElement.style.padding = '0';
     pageElement.style.boxSizing = 'border-box';
     pageElement.style.backgroundColor = 'white';
     pageElement.style.overflow = 'hidden';

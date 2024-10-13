@@ -309,8 +309,8 @@ export default function NoteEditor({
             maxWidth: '210mm',
             transform: `scale(${scale})`,
             transformOrigin: 'top center',
-            height: '297mm', // 高さをA4サイズに固定
-            overflow: 'hidden', // オーバーフローを隠す
+            height: '297mm',
+            overflow: 'hidden',
           }}
         >
           <div
@@ -321,8 +321,8 @@ export default function NoteEditor({
             className="shadow-lg bg-white note-content relative"
             style={{
               width: '210mm',
-              height: '297mm', // 高さをA4サイズに固定
-              padding: '40px 20px 60px', // 修正: パディングを60pxに統一
+              height: '297mm',
+              padding: '0',
               boxSizing: 'border-box',
               fontFamily: '"Zen Kurenaido", sans-serif',
               fontSize: '16px',
@@ -330,12 +330,19 @@ export default function NoteEditor({
               background: 'linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px)',
               backgroundSize: '100% 40px',
               backgroundAttachment: 'local',
-              overflow: 'hidden', // オーバーフローを隠す
-              wordWrap: 'break-word', // 長い単語を折り返す
+              overflow: 'hidden',
+              wordWrap: 'break-word',
             }}
             suppressContentEditableWarning={true}
           >
-            {/* ノートのHTMLコンテンツ */}
+            <div style={{
+              width: '200mm',
+              margin: '0 auto',
+              padding: '0 5mm',
+              boxSizing: 'border-box',
+            }}>
+              {/* ノートのHTMLコンテンツ */}
+            </div>
           </div>
           {svgDiagrams[currentPage] && (
             <div
