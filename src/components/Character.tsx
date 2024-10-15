@@ -1,3 +1,21 @@
+/**
+ * Character.tsx
+ * 
+ * VRMモデルを使用した3Dキャラクターを表示し、ユーザーとのインタラクションを管理するコンポーネント。
+ * 
+ * 主な機能:
+ * - VRMモデルの読み込みと表示
+ * - キャラクターの感情表現の制御
+ * - ユーザーとのチャットインターフェース
+ * - 自然な揺れアニメーションの適用
+ * - カメラ設定とライティング
+ * 
+ * このコンポーネントは、3Dキャラクターの表示と対話機能を統合し、
+ * ユーザーエクスペリエンスを向上させる中心的な役割を果たします。
+ * 
+ * @module Character
+ */
+
 // src/components/Character.tsx
 import React, { useRef, useEffect, Suspense, useState } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'

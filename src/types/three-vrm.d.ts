@@ -1,6 +1,17 @@
-/* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
+/**
+ * three-vrm.d.ts
+ * 
+ * @pixiv/three-vrm ライブラリの型定義ファイル。
+ * 
+ * このファイルは、VRM モデルの操作に必要なインターフェースと
+ * クラスの型定義を提供します。VRM モデルのローディング、
+ * 表情管理、ボーン操作などの機能を TypeScript で
+ * 型安全に実装することを可能にします。
+ * 
+ * @module ThreeVRMTypes
+ */
 
-// src/types/three-vrm.d.ts
+
 declare module '@pixiv/three-vrm' {
     import * as THREE from 'three';
   

@@ -1,3 +1,22 @@
+/**
+ * SVGEditor.tsx
+ * 
+ * SVG図の表示、編集、および管理を行うためのコンポーネント。
+ * 
+ * 主な機能:
+ * - SVG図の表示
+ * - 拡大/縮小機能
+ * - ドラッグによる位置調整
+ * - 編集モードでの操作コントロールの表示
+ * - SVG図の削除機能
+ * 
+ * このコンポーネントは、ユーザーがSVG図を直感的に操作し、
+ * ノート内でのレイアウトを調整するための機能を提供します。
+ * 親コンポーネントと連携して、SVG図の状態を管理します。
+ * 
+ * @module SVGEditor
+ */
+
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { X, ZoomIn, ZoomOut } from 'lucide-react'

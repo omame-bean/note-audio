@@ -1,3 +1,21 @@
+/**
+ * AudioRecorder.tsx
+ * 
+ * 音声入力（マイクまたはファイルアップロード）を処理し、文字起こしを行うコンポーネント。
+ * 
+ * 主な機能:
+ * - マイクを使用したリアルタイム音声認識
+ * - 音声ファイルのアップロードと文字起こし
+ * - 録音時間の管理と表示
+ * - エラーハンドリング
+ * - 使用方法と制限事項の表示
+ * 
+ * このコンポーネントは、音声入力を文字に変換し、親コンポーネントに結果を渡す役割を果たします。
+ * また、VRMキャラクターの表示も含まれており、音声入力に応じて感情を変更することができます。
+ * 
+ * @module AudioRecorder
+ */
+
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
@@ -208,6 +226,9 @@ export default function AudioRecorder({
     <div className="space-y-4">
       {/* VRMキャラクターの表示をトグルの外側に移動 */}
       <div className="character-container">
+        <div className="text-center mb-2 font-semibold">
+          ナビゲーター：ここる
+        </div>
         <Character emotion={emotion} setEmotion={setEmotion} />
       </div>
 

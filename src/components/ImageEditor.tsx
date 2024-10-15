@@ -1,3 +1,21 @@
+/**
+ * ImageEditor.tsx
+ * 
+ * 画像の編集と操作を行うためのコンポーネント。
+ * 
+ * 主な機能:
+ * - 画像の表示と拡大/縮小
+ * - ドラッグによる画像の位置調整
+ * - 編集モードでの操作コントロールの表示
+ * - 画像の削除機能
+ * 
+ * このコンポーネントは、ユーザーが画像を直感的に操作し、
+ * レイアウトを調整するための機能を提供します。
+ * 親コンポーネントと連携して、画像の状態を管理します。
+ * 
+ * @module ImageEditor
+ */
+
 import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { X, ZoomIn, ZoomOut } from 'lucide-react'

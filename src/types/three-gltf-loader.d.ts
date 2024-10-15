@@ -1,4 +1,15 @@
-// src/types/three-gltf-loader.d.ts
+/**
+ * three-gltf-loader.d.ts
+ * 
+ * Three.js の GLTFLoader に関する拡張型定義ファイル。
+ * 
+ * このファイルは、GLTFLoader クラスに VRMLoaderPlugin を登録するための
+ * メソッドの型定義を追加します。VRM モデルのローディングを
+ * TypeScript プロジェクトで型安全に実装することを可能にします。
+ * 
+ * @module ThreeGLTFLoaderTypes
+ */
+
 import { VRMLoaderPlugin } from '@pixiv/three-vrm';
 import { GLTF, GLTFParser } from 'three/examples/jsm/loaders/GLTFLoader'
 

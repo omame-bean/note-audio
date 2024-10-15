@@ -1,3 +1,15 @@
+/**
+ * SVGEditor.d.ts
+ * 
+ * SVGEditor コンポーネントの型定義ファイル。
+ * 
+ * このファイルは、SVGEditor コンポーネントのプロパティの型を定義します。
+ * SVGEditor コンポーネントを使用する際の型安全性を確保し、
+ * 開発者が正しいプロパティを渡すことを支援します。
+ * 
+ * @module SVGEditorTypes
+ */
+
 declare module '@/components/SVGEditor' {
   import React from 'react';
 

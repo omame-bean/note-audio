@@ -62,6 +62,7 @@
 
    ```
    NEXT_PUBLIC_OPENAI_API_KEY=your_openai_api_key
+   OPENAI_API_KEY=your_openai_api_key
    ```
 
 5. **開発サーバーを起動する**

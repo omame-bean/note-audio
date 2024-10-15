@@ -1,3 +1,23 @@
+/**
+ * NoteTakingApp.tsx
+ * 
+ * 音声入力からノートを生成し、編集・管理するためのメインアプリケーションコンポーネント。
+ * 
+ * 主な機能:
+ * - 音声入力と文字起こし
+ * - プロンプト選択によるノート生成
+ * - 生成されたノートの表示と編集
+ * - SVG図と画像の生成と管理
+ * - エラーハンドリングと表示
+ * - キャラクターの感情表現
+ * 
+ * このコンポーネントは、AudioRecorderとNoteEditorを統合し、
+ * ユーザーが音声入力からノートを作成し、編集するための
+ * 包括的なインターフェースを提供します。
+ * 
+ * @module NoteTakingApp
+ */
+
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'

@@ -1,4 +1,14 @@
-// src/types/three-examples.d.ts
+/**
+ * three-examples.d.ts
+ * 
+ * Three.jsの追加モジュールに対する型定義ファイル。
+ * 
+ * このファイルは、Three.jsのGLTFLoaderモジュールの型定義を提供します。
+ * TypeScriptプロジェクトでGLTFLoaderを使用する際の型安全性を確保します。
+ * 
+ * @module ThreeExamplesTypes
+ */
+
 declare module 'three/examples/jsm/loaders/GLTFLoader' {
     import { Loader, LoadingManager } from 'three';
     import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';

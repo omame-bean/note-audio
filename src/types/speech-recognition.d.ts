@@ -1,3 +1,15 @@
+/**
+ * speech-recognition.d.ts
+ * 
+ * Web Speech API の SpeechRecognition インターフェースに関する型定義ファイル。
+ * 
+ * このファイルは、ブラウザの音声認識機能を使用するための型定義を提供します。
+ * SpeechRecognition オブジェクトとその関連インターフェースの型を定義し、
+ * TypeScript プロジェクトでの音声認識機能の実装を支援します。
+ * 
+ * @module SpeechRecognitionTypes
+ */
+
 export {};
 
 declare global {
