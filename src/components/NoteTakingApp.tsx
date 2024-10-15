@@ -56,7 +56,7 @@ export default function NoteTakingApp() {
   const [generatedImages, setGeneratedImages] = useState<(string | null)[]>([])
   const [imageScales, setImageScales] = useState<number[]>([])
   const [imagePositions, setImagePositions] = useState<{ x: number; y: number }[]>([])
-  const [emotion, setEmotion] = useState<'happy' | 'angry' | 'neutral'>('neutral')
+  const [emotion, setEmotion] = useState<'happy' | 'angry' | 'sad' | 'relaxed' | 'surprised' | 'neutral'>('neutral')
 
   // refの初期化
   const noteRef = useRef<HTMLDivElement>(null)
@@ -166,6 +166,8 @@ export default function NoteTakingApp() {
             isTranscribing={isTranscribing}
             setIsTranscribing={setIsTranscribing}
             apiKey={apiKey}
+            emotion={emotion}
+            setEmotion={setEmotion}
           />
           {/* エラー表示 */}
           {error && (

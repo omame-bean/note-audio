@@ -16,6 +16,8 @@ interface AudioRecorderProps {
   setAudioFile: React.Dispatch<React.SetStateAction<File | null>>
   isTranscribing: boolean
   setIsTranscribing: React.Dispatch<React.SetStateAction<boolean>>
+  emotion: 'happy' | 'angry' | 'sad' | 'relaxed' | 'surprised' | 'neutral'
+  setEmotion: React.Dispatch<React.SetStateAction<'happy' | 'angry' | 'sad' | 'relaxed' | 'surprised' | 'neutral'>>
 }
 
 export default function AudioRecorder({
@@ -25,7 +27,9 @@ export default function AudioRecorder({
   audioFile,
   setAudioFile,
   isTranscribing,
-  setIsTranscribing
+  setIsTranscribing,
+  emotion,
+  setEmotion
 }: AudioRecorderProps) {
   // 状態の初期化
   const [isRecording, setIsRecording] = useState(false)
@@ -204,7 +208,7 @@ export default function AudioRecorder({
     <div className="space-y-4">
       {/* VRMキャラクターの表示をトグルの外側に移動 */}
       <div className="character-container">
-        <Character emotion="neutral" />
+      <Character emotion={emotion} setEmotion={setEmotion} />
       </div>
 
       {/* 使い方と制限事項セクション */}
