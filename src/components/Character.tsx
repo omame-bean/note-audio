@@ -47,8 +47,8 @@ const VRMLoader = ({ emotion, setEmotion }: CharacterProps) => {
           mixerRef.current = new THREE.AnimationMixer(vrm.scene)
 
           // モデルの位置とスケールを調整
-          vrm.scene.position.set(0, -8.5, 0.0)
-          vrm.scene.scale.setScalar(6.0)
+          vrm.scene.position.set(0, -11, -1.0)
+          vrm.scene.scale.setScalar(7.8)
 
           if (vrm.expressionManager) {
             console.log('Available expressions:')
@@ -162,7 +162,7 @@ const VRMLoader = ({ emotion, setEmotion }: CharacterProps) => {
         if (emotion !== 'happy') {
           blinkAnimation()
         }
-      }, 4000)
+      }, 5000)
 
       return () => {
         clearInterval(blinkInterval)
@@ -207,8 +207,8 @@ const CameraSetup = () => {
   const { camera } = useThree()
 
   useEffect(() => {
-    camera.position.set(0, -1.7, 10.0) // カメラの位置を調整（より近く）
-    camera.lookAt(0, 3.0, 0) // カメラの向きを調整（顔の高さ）
+    camera.position.set(0, -1.8, 5) // カメラの位置を調整（より近く）
+    camera.lookAt(0, 5.0, 0) // カメラの向きを調整（顔の高さ）
   }, [camera])
 
   return null
@@ -288,26 +288,55 @@ const CharacterComponent = ({ emotion, setEmotion }: CharacterProps) => {
 
   return (
     <div>
-      <Canvas style={{ height: '200px' }}>
-        <Suspense fallback={<Loader />}>
-          <CameraSetup />
-          <ambientLight intensity={1} />
-          <directionalLight position={[100, 10, 0]} intensity={2.5} />
-          <VRMLoader emotion={emotion} setEmotion={setEmotion} />
-          <OrbitControls 
-            enableZoom={true} 
-            enablePan={true} 
-            enableRotate={true}
-            mouseButtons={{
-              LEFT: THREE.MOUSE.ROTATE,
-              MIDDLE: THREE.MOUSE.DOLLY,
-              RIGHT: THREE.MOUSE.PAN
-            }}
-            minDistance={0.5} // 最小ズーム距離を設定
-            maxDistance={2} // 最大ズーム距離を設定
-          />
-        </Suspense>
-      </Canvas>
+      <div 
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '200px',
+          backgroundImage: 'url(/background.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <Canvas
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          <Suspense fallback={<Loader />}>
+            <CameraSetup />
+            <ambientLight intensity={0.4} color="#FFF5E6" /> {/* 暖かい色の環境光 */}
+            <directionalLight 
+              position={[0, 0, 5]}
+              intensity={3.5}
+              color="#fdfcf4" // 黄金色の光
+              castShadow
+            />
+            <pointLight
+              position={[0, 5, 3]}
+              intensity={0.8}
+              color="#ffe5b4" // オレンジ色の光
+            />
+            <VRMLoader emotion={emotion} setEmotion={setEmotion} />
+            <OrbitControls 
+              enableZoom={true} 
+              enablePan={true} 
+              enableRotate={true}
+              mouseButtons={{
+                LEFT: THREE.MOUSE.ROTATE,
+                MIDDLE: THREE.MOUSE.DOLLY,
+                RIGHT: THREE.MOUSE.PAN
+              }}
+              minDistance={0.5}
+              maxDistance={2}
+            />
+          </Suspense>
+        </Canvas>
+      </div>
       <div className="mt-4">
         <p className="mb-2 break-words max-h-24 overflow-y-auto">{characterResponse}</p>
         <div className="flex">
