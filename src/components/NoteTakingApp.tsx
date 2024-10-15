@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Input } from "@/components/ui/input"
-import { EyeIcon, EyeOffIcon, Download } from 'lucide-react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+//import { Input } from "@/components/ui/input"
+//import { EyeIcon, EyeOffIcon, Download } from 'lucide-react'
+//import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AudioRecorder from '@/components/AudioRecorder'
 import NoteEditor from '@/components/NoteEditor'
-import { generateNotePages, handleExportPDF } from '@/utils/noteUtils'
+import { generateNotePages} from '@/utils/noteUtils'
 import axios from 'axios';
 import { generateSVGDiagram } from '@/utils/svgUtils'
-import SVGEditor from '@/components/SVGEditor'
-import Character from './Character'
+//import SVGEditor from '@/components/SVGEditor'
+//import Character from './Character'
 
 // プロンプトオプションの定義
 const promptOptions = [

@@ -12,13 +12,13 @@ interface Window {
 }
 
 // SpeechRecognitionコンストラクタの宣言
-declare var SpeechRecognition: {
+declare let SpeechRecognition: {
   prototype: SpeechRecognition;
   new(): SpeechRecognition;
 };
 
 // webkitSpeechRecognitionコンストラクタの宣言（Chromeなどのブラウザ用）
-declare var webkitSpeechRecognition: {
+declare let webkitSpeechRecognition: {
   prototype: SpeechRecognition;
   new(): SpeechRecognition;
 };

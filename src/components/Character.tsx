@@ -7,7 +7,7 @@ import { VRMLoaderPlugin, VRMUtils, VRM as OriginalVRM, VRMHumanBoneName } from 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { Textarea } from "@/components/ui/textarea"  // Inputの代わりにTextareaをインポート
 import { Button } from "@/components/ui/button"
-import axios from 'axios'
+//import axios from 'axios'
 import { Loader2 } from 'lucide-react'  // Loader2アイコンをインポート
 
 // VRM型を拡張して update メソッドを含める
@@ -25,7 +25,7 @@ const Loader = () => {
   return <Html center>{progress}% loaded</Html>
 }
 
-const VRMLoader = ({ emotion, setEmotion }: CharacterProps) => {
+const VRMLoader = ({ emotion }: CharacterProps) => {
   const { scene } = useThree()
   const vrmRef = useRef<VRM | null>(null)
   const mixerRef = useRef<THREE.AnimationMixer | null>(null)
@@ -389,7 +389,7 @@ const loadAnimations = async (vrm: VRM) => {
       const vrmAnimations = gltf.userData.vrmAnimations
       if (vrmAnimations && vrmAnimations.length > 0) {
         const vrmAnimation = vrmAnimations[0]
-        const clip = vrmAnimation.createAnimationClip(vrm)
+        const clip: THREE.AnimationClip = vrmAnimation.createAnimationClip(vrm)
         // ここでアニメーションを設定・再生する処理を追加
         console.log(`Loaded animation: ${anim.name}`)
       } else {

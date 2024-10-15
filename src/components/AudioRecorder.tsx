@@ -35,7 +35,6 @@ export default function AudioRecorder({
   const [isRecording, setIsRecording] = useState(false)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const [recordingTime, setRecordingTime] = useState(0)
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const [totalRecordingTime, setTotalRecordingTime] = useState(0)
   const [currentSessionTime, setCurrentSessionTime] = useState(0)
@@ -50,9 +49,10 @@ export default function AudioRecorder({
 
   // SpeechRecognitionの初期化と設定
   useEffect(() => {
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-      recognitionRef.current = new SpeechRecognition()
+    const SpeechRecognitionClass = (window as typeof window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognitionClass) {
+      recognitionRef.current = new SpeechRecognitionClass();
       if (recognitionRef.current) {
         recognitionRef.current.continuous = true
         recognitionRef.current.interimResults = true
@@ -90,7 +90,7 @@ export default function AudioRecorder({
       }
     }
   }, [setTranscription, setError])
-  
+
   // 録音開始・停止の処理
   const handleStartRecording = () => {
     if (recognitionRef.current) {
@@ -162,7 +162,7 @@ export default function AudioRecorder({
       setError(null)
     }
   }
-  
+
   // ファイルの文字起こし処理
   const handleTranscribeFile = async () => {
     if (!audioFile) {
@@ -208,7 +208,7 @@ export default function AudioRecorder({
     <div className="space-y-4">
       {/* VRMキャラクターの表示をトグルの外側に移動 */}
       <div className="character-container">
-      <Character emotion={emotion} setEmotion={setEmotion} />
+        <Character emotion={emotion} setEmotion={setEmotion} />
       </div>
 
       {/* 使い方と制限事項セクション */}

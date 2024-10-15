@@ -6,7 +6,7 @@ import { Bold, Type, ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download,
 import SVGEditor from '@/components/SVGEditor'
 import { cleanupSVGContent, generateSVGDiagram } from '../utils/svgUtils'
 import { generateImage } from '../utils/imageUtils'
-import Image from 'next/image'
+//import Image from 'next/image'
 import ImageEditor from './ImageEditor'
 import { handleExportPDF as exportPDF } from '../utils/noteUtils'
 
@@ -36,7 +36,7 @@ export default function NoteEditor({
   generatedNotes,
   currentPage,
   setCurrentPage,
-  noteRef,
+  //noteRef,
   containerRef,
   updateNote,
   svgDiagrams,
