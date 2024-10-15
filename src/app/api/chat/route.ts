@@ -1,7 +1,11 @@
 "use server"
 
 import { NextResponse } from 'next/server'
-import axios from 'axios'
+import OpenAI from 'openai'
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+})
 
 // キャラクターの設定を定義するシステムプロンプト
 const CHARACTER_SYSTEM_PROMPT = `
@@ -66,46 +70,34 @@ const EMOTION_PROMPT = `
 
 export async function POST(request: Request) {
   try {
-    const { message } = await request.json()
+    const { messages } = await request.json()
     
-    const apiUrl = 'https://api.openai.com/v1/chat/completions'
-    const apiKey = process.env.OPENAI_API_KEY
+    // システムメッセージを追加
+    const fullMessages = [
+      { role: 'system', content: CHARACTER_SYSTEM_PROMPT },
+      ...messages
+    ]
 
-    // チャットの応答生成
-    const chatResponse = await axios.post(apiUrl, {
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: CHARACTER_SYSTEM_PROMPT },
-        { role: 'user', content: message }
-      ],
-      max_tokens: 200
-    }, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      }
+    const chatCompletion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: fullMessages,
     })
 
-    const characterResponse = chatResponse.data.choices[0].message.content
+    const response = chatCompletion.choices[0].message.content
 
     // 感情の判断
-    const emotionResponse = await axios.post(apiUrl, {
-      model: 'gpt-4o-mini',
+    const emotionResponse = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
       messages: [
         { role: 'system', content: EMOTION_PROMPT },
-        { role: 'user', content: characterResponse }
+        { role: 'user', content: response || '' }
       ],
       max_tokens: 10
-    }, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      }
     })
 
-    const emotion = emotionResponse.data.choices[0].message.content.trim().toLowerCase()
+    const emotion = emotionResponse.choices[0].message.content?.trim().toLowerCase() || 'neutral'
 
-    return NextResponse.json({ response: characterResponse, emotion })
+    return NextResponse.json({ response, emotion })
   } catch (error) {
     console.error('Error in chat API:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

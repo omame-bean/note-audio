@@ -1,3 +1,4 @@
+// src/components/Character.tsx
 import React, { useRef, useEffect, Suspense, useState } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls, useProgress, Html } from '@react-three/drei'
@@ -50,13 +51,22 @@ const VRMLoader = ({ emotion, setEmotion }: CharacterProps) => {
           vrm.scene.scale.setScalar(6.0)
 
           if (vrm.expressionManager) {
-            console.log('Available expressions:', 
-              vrm.expressionManager.expressions.map(exp => exp.name)
-            );
-            // 初期値を確認
-            vrm.expressionManager.expressions.forEach(exp => {
-              console.log(`Initial ${exp.name} value:`, exp.weight);
-            });
+            console.log('Available expressions:')
+            // 表情名のリストを定義（必要に応じて追加・修正）
+            const availableExpressions = [
+              'happy',
+              'angry',
+              'sad',
+              'relaxed',
+              'surprised',
+              'neutral',
+              'blink',
+              // 他にも必要な表情を追加
+            ]
+
+            console.log('Available expressions:', availableExpressions)
+
+            // 初期値の確認はgetValueが存在しないため削除
           }
 
           setNaturalPose(vrm)
@@ -92,69 +102,75 @@ const VRMLoader = ({ emotion, setEmotion }: CharacterProps) => {
       console.log('VRM and expressionManager are available');
       
       // すべての表情をリセット
-      vrmRef.current.expressionManager.expressions.forEach(exp => {
-        exp.weight = 0;
-        console.log(`Reset expression: ${exp.name}`);
-      });
+      const expressionNames = [
+        'happy',
+        'angry',
+        'sad',
+        'relaxed',
+        'surprised',
+        'neutral',
+        'blink',
+        // 必要に応じて他表情も追加
+      ]
+
+      expressionNames.forEach((name) => {
+        vrmRef.current!.expressionManager.setValue(name, 0)
+        console.log(`Reset expression: ${name}`)
+      })
 
       // 感情に応じて適切な表情を設定
-      const targetExpression = vrmRef.current.expressionManager.expressions.find(exp => exp.name === `VRMExpression_${emotion}`);
-      if (targetExpression) {
-        console.log(`Setting ${emotion} expression`);
-        targetExpression.weight = 1;
-        console.log(`${emotion} expression value:`, targetExpression.weight);
-      } else {
-        console.warn(`Expression for ${emotion} not found`);
-      }
+      console.log(`Setting ${emotion} expression`)
+      vrmRef.current.expressionManager.setValue(emotion, 1.0)
+      console.log(`${emotion} expression value: 1.0`)
 
       // 表情の変更を即座に反映
-      vrmRef.current.update(0);
+      vrmRef.current.update(0)
 
-      // 現在の表情の値をログ出力
-      console.log('Current expression values:', 
-        vrmRef.current.expressionManager.expressions.map(exp => 
-          `${exp.name}: ${exp.weight}`
-        )
-      );
+      // 現在の表情の値をログ出力（取得方法がないためコメントアウト）
+      /*
+      expressionNames.forEach((name) => {
+        const value = vrmRef.current!.expressionManager.getValue(name)
+        console.log(`${name}: ${value}`)
+      })
+      */
 
       // まばたきのアニメーション
       const blinkAnimation = () => {
         if (vrmRef.current && vrmRef.current.expressionManager) {
-          const blinkExpression = vrmRef.current.expressionManager.expressions.find(exp => exp.name === 'VRMExpression_blink');
-          if (blinkExpression && emotion !== 'happy') {  // happyの時は瞬きしない
-            blinkExpression.weight = 1;
-            console.log('Blink started');
-            vrmRef.current.update(0);
+          if (emotion !== 'happy') {  // happyの時は瞬きしない
+            vrmRef.current.expressionManager.setValue('blink', 1.0)
+            console.log('Blink started')
+            vrmRef.current.update(0)
             setTimeout(() => {
-              if (vrmRef.current && blinkExpression) {
-                blinkExpression.weight = 0;
-                console.log('Blink ended');
-                vrmRef.current.update(0);
+              if (vrmRef.current) {
+                vrmRef.current.expressionManager.setValue('blink', 0.0)
+                console.log('Blink ended')
+                vrmRef.current.update(0)
               }
-            }, 100);
+            }, 100)
           }
         }
-      };
+      }
 
       // 初回のまばたき（happyでない場合のみ）
       if (emotion !== 'happy') {
-        blinkAnimation();
+        blinkAnimation()
       }
 
       // 定期的なまばたき
       const blinkInterval = setInterval(() => {
         if (emotion !== 'happy') {
-          blinkAnimation();
+          blinkAnimation()
         }
-      }, 4000);
+      }, 4000)
 
       return () => {
-        clearInterval(blinkInterval);
-      };
+        clearInterval(blinkInterval)
+      }
     } else {
-      console.log('VRM or expressionManager is not available');
+      console.log('VRM or expressionManager is not available')
     }
-  }, [emotion, isVRMLoaded]);
+  }, [emotion, isVRMLoaded])
 
   useFrame((state, delta) => {
     if (vrmRef.current && mixerRef.current) {
@@ -201,13 +217,19 @@ const CameraSetup = () => {
 const CharacterComponent = ({ emotion, setEmotion }: CharacterProps) => {
   const [chatInput, setChatInput] = useState('')
   const [characterResponse, setCharacterResponse] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)  // 送信中の状態を管理
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [messages, setMessages] = useState<Array<{ role: string, content: string }>>([
+    { role: "system", content: "You are a helpful assistant." }
+  ])
 
-  const handleChatSubmit = async () => {
-    if (!chatInput.trim() || isSubmitting) return
+  const sendMessage = async (message: string) => {
+    setIsSubmitting(true)
 
-    setIsSubmitting(true)  // 送信開始
+    const newMessages = [
+      ...messages,
+      { role: "user", content: message }
+    ]
 
     try {
       const response = await fetch('/api/chat', {
@@ -215,7 +237,9 @@ const CharacterComponent = ({ emotion, setEmotion }: CharacterProps) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: chatInput }),
+        body: JSON.stringify({
+          messages: newMessages
+        }),
       })
 
       if (!response.ok) {
@@ -229,13 +253,20 @@ const CharacterComponent = ({ emotion, setEmotion }: CharacterProps) => {
         setEmotion(data.emotion as 'happy' | 'angry' | 'sad' | 'relaxed' | 'surprised' | 'neutral')
       }
 
-      setChatInput('')  // 入力欄をクリア
+      // 応答をメッセージ履歴に追加
+      setMessages([...newMessages, { role: "assistant", content: data.response }])
     } catch (error) {
       console.error('Error in chat:', error)
       setCharacterResponse('申し訳ありません。エラーが発生しました。')
     } finally {
-      setIsSubmitting(false)  // 送信完了
+      setIsSubmitting(false)
     }
+  }
+
+  const handleChatSubmit = () => {
+    if (!chatInput.trim() || isSubmitting) return
+    sendMessage(chatInput)
+    setChatInput('')
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
