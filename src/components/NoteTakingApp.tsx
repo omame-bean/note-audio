@@ -14,6 +14,7 @@ import { generateNotePages, handleExportPDF } from '@/utils/noteUtils'
 import axios from 'axios';
 import { generateSVGDiagram } from '@/utils/svgUtils'
 import SVGEditor from '@/components/SVGEditor'
+import Character from './Character'
 
 // プロンプトオプションの定義
 const promptOptions = [
@@ -55,6 +56,7 @@ export default function NoteTakingApp() {
   const [generatedImages, setGeneratedImages] = useState<(string | null)[]>([])
   const [imageScales, setImageScales] = useState<number[]>([])
   const [imagePositions, setImagePositions] = useState<{ x: number; y: number }[]>([])
+  const [emotion, setEmotion] = useState<'happy' | 'angry' | 'neutral'>('neutral')
 
   // refの初期化
   const noteRef = useRef<HTMLDivElement>(null)
@@ -129,6 +131,24 @@ export default function NoteTakingApp() {
 
   // APIキーを環境変数から取得
   const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || '';
+
+  // ユーザーのプロンプトに応じて感情を更新する関数
+  const updateEmotion = (message: string) => {
+    if (message.includes('ありがとう') || message.includes('嬉しい')) {
+      setEmotion('happy')
+    } else if (message.includes('問題') || message.includes('困った')) {
+      setEmotion('angry')
+    } else {
+      setEmotion('neutral')
+    }
+  }
+
+  // 文字起こしやノート生成後に感情を更新
+  useEffect(() => {
+    if (transcription) {
+      updateEmotion(transcription)
+    }
+  }, [transcription])
 
   // コンポーネントのレンダリング
   return (

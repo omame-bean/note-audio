@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Mic, Upload } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Character from './Character'
 
 // AudioRecorderコンポーネントのプロパティ定義
 interface AudioRecorderProps {
@@ -85,7 +86,7 @@ export default function AudioRecorder({
       }
     }
   }, [setTranscription, setError])
-
+  
   // 録音開始・停止の処理
   const handleStartRecording = () => {
     if (recognitionRef.current) {
@@ -157,7 +158,7 @@ export default function AudioRecorder({
       setError(null)
     }
   }
-
+  
   // ファイルの文字起こし処理
   const handleTranscribeFile = async () => {
     if (!audioFile) {
@@ -201,8 +202,13 @@ export default function AudioRecorder({
   // コンポーネントのレンダリング
   return (
     <div className="space-y-4">
+      {/* VRMキャラクターの表示をトグルの外側に移動 */}
+      <div className="character-container">
+        <Character emotion="neutral" />
+      </div>
+
       {/* 使い方と制限事項セクション */}
-      <div className="bg-gray-100 p-4 rounded-lg text-sm">
+      <div className="bg-gray-100 p-4 rounded-lg text-sm relative">
         <h3 
           className="font-bold mb-2 cursor-pointer flex justify-between items-center"
           onClick={toggleManual}
@@ -259,7 +265,7 @@ export default function AudioRecorder({
           </div>
         )}
       </div>
-
+      
       {/* タブコンテンツなど他のコンポーネント */}
       <Tabs defaultValue="microphone" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
