@@ -51,9 +51,6 @@ export default function SVGEditor({ svgContent, isEditing, onUpdate, onDelete, s
     }
   }
 
-  const handleMouseLeave = () => {
-    setShowControls(false)
-  }
 
   const handleZoomIn = () => {
     const newScale = Math.min(scale + 0.1, 2)
@@ -76,7 +73,6 @@ export default function SVGEditor({ svgContent, isEditing, onUpdate, onDelete, s
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
       onMouseEnter={handleMouseEnter}
     >
       <div

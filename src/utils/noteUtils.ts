@@ -77,7 +77,6 @@ export const generateNotePages = (content: string): string[] => {
 // 要素の高さをピクセルで推定する関数
 const estimateElementHeight = (element: Element): number => {
   const style = window.getComputedStyle(element);
-  const fontSize = parseFloat(style.fontSize || '16'); // デフォルトフォントサイズ
   const lineHeight = parseFloat(style.lineHeight || '40'); // デフォルトラインハイト
 
   let height = 0;

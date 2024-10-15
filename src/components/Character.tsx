@@ -65,8 +65,6 @@ const VRMLoader = ({ emotion }: CharacterProps) => {
             ]
 
             console.log('Available expressions:', availableExpressions)
-
-            // 初期値の確認はgetValueが存在しないため削除
           }
 
           setNaturalPose(vrm)

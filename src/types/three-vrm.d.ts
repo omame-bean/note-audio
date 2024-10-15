@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
+
 // src/types/three-vrm.d.ts
 declare module '@pixiv/three-vrm' {
     import * as THREE from 'three';
@@ -84,6 +86,6 @@ declare module '@pixiv/three-vrm' {
     }
   
     export class VRMLoaderPlugin {
-        constructor(parser: any); // 'any' を具体的な型に変更することを推奨
+        constructor(parser: GLTFParser);
     }
 }

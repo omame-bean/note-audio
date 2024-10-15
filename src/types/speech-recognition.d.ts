@@ -42,6 +42,6 @@ declare global {
     message?: string;
   }
 
-  var SpeechRecognition: SpeechRecognitionStatic;
-  var webkitSpeechRecognition: SpeechRecognitionStatic;
+  let SpeechRecognition: SpeechRecognitionStatic;
+  let webkitSpeechRecognition: SpeechRecognitionStatic;
 }
