@@ -1,36 +1,240 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI音声ノートアプリ
 
-## Getting Started
+このプロジェクトは、音声入力や音声ファイルからスマートなノートを作成するAIアプリケーションです。ユーザーは音声をテキストに変換し、AIの力を借りて整理されたノートを生成できます。また、生成されたノートには図や画像を追加することも可能です。さらに、VRMキャラクターがアプリの使い方を説明し、ユーザーの質問に対応します。キャラクターは感情に応じて表情を変えるため、直感的な操作が可能です。
 
-First, run the development server:
+## 目次
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- [機能](#機能)
+- [インストール方法](#インストール方法)
+- [使い方](#使い方)
+  - [1. 音声入力](#1-音声入力)
+  - [2. 音声ファイルのアップロード](#2-音声ファイルのアップロード)
+  - [3. 文字起こし結果の確認](#3-文字起こし結果の確認)
+  - [4. ノート生成](#4-ノート生成)
+  - [5. ノートの編集](#5-ノートの編集)
+  - [6. 図や画像の追加](#6-図や画像の追加)
+  - [7. PDF出力](#7-pdf出力)
+  - [8. VRMキャラクターとのインタラクション](#8-vrmキャラクターとのインタラクション)
+- [注意事項](#注意事項)
+- [技術スタック](#技術スタック)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 機能
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **音声入力**: マイクを使用して直接録音。
+- **音声ファイルのアップロード**: WAVまたはMP3形式の音声ファイルをアップロード。
+- **自動文字起こし**: 録音またはアップロードされた音声をテキストに変換。
+- **ノート生成**: 文字起こし結果を基にAIが整理されたノートを作成。
+- **ノート編集**: 生成されたノートをリアルタイムで編集可能。
+- **図や画像の追加**: テキストから関連する図や画像を自動生成し、ノートに挿入。
+- **PDF出力**: 完成したノートをPDF形式でダウンロード。
+- **VRMキャラクターによるガイドとインタラクション**:
+  - **使い方の説明**: VRMキャラクターがアプリの使い方を分かりやすく説明します。
+  - **質問対応**: ユーザーはアプリに関するあらゆる質問をキャラクターに投げかけることができます。
+  - **感情表現の変化**: キャラクターは感情に応じて表情を変え、より親しみやすいインターフェースを提供します。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## インストール方法
 
-## Learn More
+1. **リポジトリをクローンする**
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   git clone https://github.com/omame-bean/note-audio.git
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **ディレクトリに移動する**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   cd note-audio
+   ```
 
-## Deploy on Vercel
+3. **依存関係をインストールする**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   npm install
+   # または
+   yarn install
+   # または
+   pnpm install
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. **環境変数を設定する**
+
+   プロジェクトルートに `.env.local` ファイルを作成し、OpenAI APIキーを追加します。
+
+   ```
+   NEXT_PUBLIC_OPENAI_API_KEY=your_openai_api_key
+   OPENAI_API_KEY=your_openai_api_key
+   ```
+
+5. **開発サーバーを起動する**
+
+   ```bash
+   npm run dev
+   # または
+   yarn dev
+   # または
+   pnpm dev
+   # または
+   bun dev
+   ```
+
+6. **ブラウザでアプリを確認する**
+
+   [http://localhost:3000](http://localhost:3000) にアクセスしてください。
+
+## 使い方
+
+### 1. 音声入力
+
+1. **「マイク入力」タブを選択**
+   
+   アプリの上部にあるタブメニューから「マイク入力」を選択します。
+
+2. **録音開始**
+   
+   「録音開始」ボタンをクリックして、音声の録音を開始します。
+
+3. **録音中の表示**
+   
+   録音中は、現在の録音時間と合計録音時間が画面に表示されます。
+
+4. **録音停止**
+   
+   録音を停止するには、再度「録音開始」ボタンをクリックします。録音は最大15分間可能です。
+
+### 2. 音声ファイルのアップロード
+
+1. **「ファイル入力」タブを選択**
+   
+   タブメニューから「ファイル入力」を選びます。
+
+2. **音声ファイルをアップロード**
+   
+   WAVまたはMP3形式の音声ファイル（最大25MB）をドラッグ＆ドロップするか、「ファイルを選択」ボタンをクリックしてアップロードします。
+
+3. **文字起こし開始**
+   
+   ファイルがアップロードされたら、「文字起こし開始」ボタンをクリックして、音声ファイルの文字起こしを行います。
+
+### 3. 文字起こし結果の確認
+
+- 音声入力またはファイルアップロード後、文字起こしされたテキストがテキストエリアに表示されます。
+- 必要に応じて、テキストを手動で修正・編集することができます。
+
+### 4. ノート生成
+
+1. **プロンプトを選択**
+   
+   ドロップダウンメニューから適切なプロンプト（例：「会議内容を整理する」）を選びます。
+
+2. **ノート生成**
+   
+   「ノート生成」ボタンをクリックします。AIが文字起こし結果を基に整理されたノートを生成し、右側のエディタに表示します。
+
+### 5. ノートの編集
+
+- **編集モードに切替**
+  
+  生成されたノート内の「編集」ボタンをクリックすると、編集モードに切り替わります。
+
+- **テキストの修正**
+  
+  必要に応じてテキストを追加・削除・修正できます。
+
+- **フォーマット調整**
+  
+  ツールバーのオプションを使用して、テキストのフォントやスタイルを変更できます。
+
+### 6. 図や画像の追加
+
+1. **テキストの選択**
+   
+   ノート内の追加したいテキスト部分を選択します。
+
+2. **図や画像の生成**
+   
+   「図を生成」または「画像を生成」ボタンをクリックします。AIが選択したテキストに基づいて関連する図や画像を自動生成します。
+
+3. **配置と調整**
+   
+   生成された図や画像はドラッグ＆ドロップで任意の位置に配置し、サイズや位置を調整できます。
+
+### 7. PDF出力
+
+- **PDF形式でダウンロード**
+  
+  完成したノートを「PDF出力」ボタンをクリックすることで、PDF形式でダウンロードできます。これにより、オフラインでも閲覧や印刷が可能です。
+
+### 8. VRMキャラクターとのインタラクション
+
+1. **キャラクターのガイド機能**
+   
+   アプリを起動すると、画面にVRMキャラクターが表示されます。キャラクターがアプリの各機能を紹介し、使い方をガイドします。
+
+2. **質問機能**
+   
+   キャラクターに対して、あらゆる質問を投げかけることができます。例えば、「この機能の使い方を教えて」といった質問に対して、キャラクターが応答します。
+
+3. **感情による表情変化**
+   
+   キャラクターはユーザーのインタラクションやアプリの状態に応じて、感情表現（喜び、驚き、困惑など）が変化します。これにより、より親しみやすく、直感的なユーザー体験を提供します。
+
+## 注意事項
+
+- **録音時間の制限**
+  
+  録音は最大15分間まで可能です。15分を超える録音を試みると、自動的に録音が停止します。
+
+- **ファイルサイズの制限**
+  
+  アップロードできる音声ファイルのサイズは最大25MBです。これを超えるファイルはアップロードできません。
+
+- **インターネット接続**
+  
+  このアプリケーションはAI機能を利用するため、安定したインターネット接続が必要です。
+
+- **プライバシー**
+  
+  録音された音声データは、文字起こしおよびノート生成のみに使用され、他の目的には利用されません。ただし、プライバシーに関する詳細はプライバシーポリシーをご確認ください。
+
+## 技術スタック
+
+このプロジェクトでは以下の技術を使用しています：
+
+- [Next.js](https://nextjs.org/docs) - Reactベースのフレームワーク
+- [Tailwind CSS](https://tailwindcss.com/) - ユーティリティファーストのCSSフレームワーク
+- [OpenAI API](https://openai.com/blog/openai-api) - 自然言語処理と画像生成
+- [Three.js](https://threejs.org/) - 3Dグラフィックスライブラリ
+- [Axios](https://axios-http.com/) - HTTPクライアント
+- その他多くのライブラリとツールを使用しています。
+
+## 貢献方法
+
+貢献していただける方を歓迎します！以下の手順に従って、プロジェクトに貢献してください。
+
+1. **リポジトリをフォークする**
+
+2. **新しいブランチを作成する**
+
+   ```bash
+   git checkout -b feature/新機能名
+   ```
+
+3. **変更をコミットする**
+
+   ```bash
+   git commit -m "Add 新機能の説明"
+   ```
+
+4. **ブランチをプッシュする**
+
+   ```bash
+   git push origin feature/新機能名
+   ```
+
+5. **プルリクエストを作成する**
+
+   GitHub上でプルリクエストを作成し、変更内容を説明してください。
+
+## ライセンス
+
+このプロジェクトはMITライセンスのもとで公開されています。詳細については [LICENSE](LICENSE) ファイルをご覧ください。
