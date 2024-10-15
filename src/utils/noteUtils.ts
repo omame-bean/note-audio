@@ -4,17 +4,12 @@ import jsPDF from 'jspdf'
 // A4サイズとレイアウトの定数
 const PAGE_HEIGHT = 297; // A4サイズの高さ（mm）
 const PAGE_WIDTH = 210; // A4サイズの幅（mm）
-const LINE_HEIGHT = 40; // 1行の高さ（px）
 const PADDING_TOP = 40; // 上部のパディング（px）
 const PADDING_BOTTOM = 60; // 下部のパディング（px）
-const LINE_PER_PAGE = 25; // 1ページあたりの最大行数
 const MM_TO_PX = 3.779528; // mmをpxに変換する定数
 
 // 使用可能なページの高さ
 const USABLE_PAGE_HEIGHT = PAGE_HEIGHT * MM_TO_PX - PADDING_TOP - PADDING_BOTTOM;
-
-// 定数の定義を更新
-const MARGIN = 5 // 左右のマージンを5mmに設定
 
 // 画像の読み込みを待つヘルパー関数を追加
 const waitForImages = (element: HTMLElement): Promise<void> => {

@@ -388,8 +388,8 @@ const loadAnimations = async (vrm: VRM) => {
       const gltf = await loader.loadAsync(`/animations/${anim.file}`)
       const vrmAnimations = gltf.userData.vrmAnimations
       if (vrmAnimations && vrmAnimations.length > 0) {
-        const vrmAnimation = vrmAnimations[0]
-        const clip: THREE.AnimationClip = vrmAnimation.createAnimationClip(vrm)
+        //const vrmAnimation = vrmAnimations[0]
+        //const clip: THREE.AnimationClip = vrmAnimation.createAnimationClip(vrm)
         // ここでアニメーションを設定・再生する処理を追加
         console.log(`Loaded animation: ${anim.name}`)
       } else {

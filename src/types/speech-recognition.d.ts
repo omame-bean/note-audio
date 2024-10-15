@@ -1,24 +1,47 @@
-// SpeechRecognitionイベントのインターフェース定義
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-  resultIndex: number;
-  interpretation: string | null;
+export {};
+
+declare global {
+  interface SpeechRecognition extends EventTarget {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    onresult: (event: SpeechRecognitionEvent) => void;
+    onerror: (event: SpeechRecognitionErrorEvent) => void;
+    start: () => void;
+    stop: () => void;
+  }
+
+  interface SpeechRecognitionStatic {
+    new (): SpeechRecognition;
+  }
+
+  interface SpeechRecognitionEvent extends Event {
+    results: SpeechRecognitionResultList;
+    resultIndex: number;
+  }
+
+  interface SpeechRecognitionResultList {
+    length: number;
+    item(index: number): SpeechRecognitionResult;
+    [index: number]: SpeechRecognitionResult;
+  }
+
+  interface SpeechRecognitionResult {
+    isFinal: boolean;
+    length: number;
+    [index: number]: SpeechRecognitionAlternative;
+  }
+
+  interface SpeechRecognitionAlternative {
+    transcript: string;
+    confidence?: number;
+  }
+
+  interface SpeechRecognitionErrorEvent extends Event {
+    error: string;
+    message?: string;
+  }
+
+  var SpeechRecognition: SpeechRecognitionStatic;
+  var webkitSpeechRecognition: SpeechRecognitionStatic;
 }
-
-// グローバルWindowオブジェクトにSpeechRecognitionを追加
-interface Window {
-  SpeechRecognition: typeof SpeechRecognition;
-  webkitSpeechRecognition: typeof SpeechRecognition;
-}
-
-// SpeechRecognitionコンストラクタの宣言
-declare let SpeechRecognition: {
-  prototype: SpeechRecognition;
-  new(): SpeechRecognition;
-};
-
-// webkitSpeechRecognitionコンストラクタの宣言（Chromeなどのブラウザ用）
-declare let webkitSpeechRecognition: {
-  prototype: SpeechRecognition;
-  new(): SpeechRecognition;
-};

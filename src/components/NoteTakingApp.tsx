@@ -47,9 +47,9 @@ export default function NoteTakingApp() {
   const [audioFile, setAudioFile] = useState<File | null>(null)
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [svgDiagram, setSvgDiagram] = useState<string | null>(null)
-  const [svgScale, setSvgScale] = useState(1) // 追加
-  const [svgPosition, setSvgPosition] = useState({ x: 50, y: 100 }) // 追加
+  //const [svgDiagram, setSvgDiagram] = useState<string | null>(null)
+  //const [svgScale, setSvgScale] = useState(1) // 追加
+  //const [svgPosition, setSvgPosition] = useState({ x: 50, y: 100 }) // 追加
   const [svgDiagrams, setSvgDiagrams] = useState<(string | null)[]>([])
   const [svgScales, setSvgScales] = useState<number[]>([])
   const [svgPositions, setSvgPositions] = useState<{ x: number; y: number }[]>([])

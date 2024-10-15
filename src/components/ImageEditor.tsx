@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { X, ZoomIn, ZoomOut } from 'lucide-react'
+import Image from 'next/image'
 
 interface ImageEditorProps {
   imageUrl: string
@@ -69,10 +70,10 @@ export default function ImageEditor({
     }
   }
 
-  const handleMouseLeave = () => {
-    setShowControls(false)
-    setIsDragging(false)
-  }
+  //const handleMouseLeave = () => {
+  //  setShowControls(false)
+  //  setIsDragging(false)
+  //}
 
   const handleZoomIn = () => {
     const newScale = Math.min(scale + 0.1, 2)
@@ -102,12 +103,14 @@ export default function ImageEditor({
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
+      //onMouseLeave={handleMouseLeave}
       onMouseEnter={handleMouseEnter}
     >
-      <img
+      <Image
         src={imageUrl}
         alt="Generated image"
+        width={512}
+        height={512}
         style={{
           width: '100%',
           height: '100%',

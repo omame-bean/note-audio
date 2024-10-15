@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Bold, Type, ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download, Highlighter, X, Loader2 } from 'lucide-react'
 import SVGEditor from '@/components/SVGEditor'
-import { cleanupSVGContent, generateSVGDiagram } from '../utils/svgUtils'
+import { generateSVGDiagram } from '../utils/svgUtils'
 import { generateImage } from '../utils/imageUtils'
 //import Image from 'next/image'
 import ImageEditor from './ImageEditor'
@@ -94,7 +94,7 @@ export default function NoteEditor({
       }
     }
     initializeImageState()
-  }, [generatedImages])
+  }, [generatedImages, setImageScales, setImagePositions])
 
   // ズーム処理を更新
   const handleZoomIn = () => {
@@ -205,15 +205,6 @@ export default function NoteEditor({
     if (isEditing && editorRef.current) {
       updateNote(currentPage, editorRef.current.innerHTML)
     }
-  }
-
-  const handleSetSvgDiagram = (newSvgContent: string) => {
-    const cleanedSvgContent = cleanupSVGContent(newSvgContent)
-    setSvgDiagrams(prevDiagrams => {
-      const newDiagrams = [...prevDiagrams]
-      newDiagrams[currentPage] = cleanedSvgContent
-      return newDiagrams
-    })
   }
 
   // SVGの位置を更新する関数
