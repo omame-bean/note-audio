@@ -53,6 +53,9 @@ PDF出力:
 文字起こしにはインターネット接続が必要です。
 ブラウザによっては音声認識機能がサポートされていない場合があります。
 ご不明な点がございましたら、お気軽にお問い合わせください。
+
+# プロンプトのせいげん
+コンテキストは200が最大なので、簡潔に分かりやすく回答してください。
 `
 
 const EMOTION_PROMPT = `
@@ -75,7 +78,7 @@ export async function POST(request: Request) {
         { role: 'system', content: CHARACTER_SYSTEM_PROMPT },
         { role: 'user', content: message }
       ],
-      max_tokens: 150
+      max_tokens: 200
     }, {
       headers: {
         'Authorization': `Bearer ${apiKey}`,

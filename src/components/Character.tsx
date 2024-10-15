@@ -4,9 +4,10 @@ import { OrbitControls, useProgress, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { VRMLoaderPlugin, VRMUtils, VRM as OriginalVRM, VRMHumanBoneName } from '@pixiv/three-vrm'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"  // Inputの代わりにTextareaをインポート
 import { Button } from "@/components/ui/button"
 import axios from 'axios'
+import { Loader2 } from 'lucide-react'  // Loader2アイコンをインポート
 
 // VRM型を拡張して update メソッドを含める
 interface VRM extends OriginalVRM {
@@ -28,6 +29,7 @@ const VRMLoader = ({ emotion, setEmotion }: CharacterProps) => {
   const vrmRef = useRef<VRM | null>(null)
   const mixerRef = useRef<THREE.AnimationMixer | null>(null)
   const swayAngleRef = useRef(0)
+  const [isVRMLoaded, setIsVRMLoaded] = useState(false)
 
   useEffect(() => {
     const loader = new GLTFLoader()
@@ -59,7 +61,8 @@ const VRMLoader = ({ emotion, setEmotion }: CharacterProps) => {
 
           setNaturalPose(vrm)
           loadAnimations(vrm).then(() => {
-            // アニメーションの読み込みが完了したら、必要に応じて処理を追加
+            // アニメーションの読み込みが完了したら、VRMの読み込み完了をセット
+            setIsVRMLoaded(true)
           }).catch(error => {
             console.error('Error loading animations:', error)
           })
@@ -82,6 +85,8 @@ const VRMLoader = ({ emotion, setEmotion }: CharacterProps) => {
   }, [scene])
 
   useEffect(() => {
+    if (!isVRMLoaded) return // VRMが読み込まれていない場合は何もしない
+
     console.log('Current emotion:', emotion);
     if (vrmRef.current && vrmRef.current.expressionManager) {
       console.log('VRM and expressionManager are available');
@@ -149,7 +154,7 @@ const VRMLoader = ({ emotion, setEmotion }: CharacterProps) => {
     } else {
       console.log('VRM or expressionManager is not available');
     }
-  }, [emotion]);
+  }, [emotion, isVRMLoaded]);
 
   useFrame((state, delta) => {
     if (vrmRef.current && mixerRef.current) {
@@ -196,8 +201,14 @@ const CameraSetup = () => {
 const CharacterComponent = ({ emotion, setEmotion }: CharacterProps) => {
   const [chatInput, setChatInput] = useState('')
   const [characterResponse, setCharacterResponse] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)  // 送信中の状態を管理
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const handleChatSubmit = async () => {
+    if (!chatInput.trim() || isSubmitting) return
+
+    setIsSubmitting(true)  // 送信開始
+
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -214,15 +225,35 @@ const CharacterComponent = ({ emotion, setEmotion }: CharacterProps) => {
       const data = await response.json()
       setCharacterResponse(data.response)
       
-      // サーバーから返された感情を使用
       if (data.emotion) {
         setEmotion(data.emotion as 'happy' | 'angry' | 'sad' | 'relaxed' | 'surprised' | 'neutral')
       }
+
+      setChatInput('')  // 入力欄をクリア
     } catch (error) {
       console.error('Error in chat:', error)
       setCharacterResponse('申し訳ありません。エラーが発生しました。')
+    } finally {
+      setIsSubmitting(false)  // 送信完了
     }
   }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setChatInput(e.target.value)
+    adjustTextareaHeight()
+  }
+
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      const newHeight = Math.min(textareaRef.current.scrollHeight, 4 * 24) // 24pxは1行の高さと仮定
+      textareaRef.current.style.height = `${newHeight}px`
+    }
+  }
+
+  useEffect(() => {
+    adjustTextareaHeight()
+  }, [chatInput])
 
   return (
     <div>
@@ -247,15 +278,33 @@ const CharacterComponent = ({ emotion, setEmotion }: CharacterProps) => {
         </Suspense>
       </Canvas>
       <div className="mt-4">
-        <p className="mb-2">{characterResponse}</p>
+        <p className="mb-2 break-words max-h-24 overflow-y-auto">{characterResponse}</p>
         <div className="flex">
-          <Input
+          <Textarea
+            ref={textareaRef}
             value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
+            onChange={handleInputChange}
             placeholder="キャラクターと会話する..."
-            className="mr-2"
+            className="mr-2 flex-grow resize-none overflow-y-auto"
+            style={{ minHeight: '15px', maxHeight: '96px' }} // 1行分の高さから4行分の高さまで
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleChatSubmit()
+              }
+            }}
           />
-          <Button onClick={handleChatSubmit}>送信</Button>
+          <Button 
+            onClick={handleChatSubmit} 
+            className="self-end" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              '送信'
+            )}
+          </Button>
         </div>
       </div>
     </div>
