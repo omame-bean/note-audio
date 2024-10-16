@@ -29,6 +29,7 @@ import { generateImage } from '../utils/imageUtils'
 //import Image from 'next/image'
 import ImageEditor from './ImageEditor'
 import { handleExportPDF as exportPDF } from '../utils/noteUtils'
+import axios from 'axios'
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -82,6 +83,11 @@ export default function NoteEditor({
   // SVG生成中の状態管理
   const [isGeneratingSVG, setIsGeneratingSVG] = useState(false)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
+
+  // 動画生成関連の状態
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false)
+  const [videoProgress, setVideoProgress] = useState<string | null>(null)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
 
   useEffect(() => {
     if (editorRef.current && !isEditing) {
@@ -315,7 +321,7 @@ export default function NoteEditor({
       })
     } catch (error) {
       console.error('SVG図の生成中にエラーが発生しました:', error)
-      setError('SVG図の生成中にエラーが発生しました。')
+      setError('SVGの生成中にエラーが発生しました。')
     } finally {
       setIsGeneratingSVG(false) // 生成終了時に状態をリセット
     }
@@ -346,6 +352,60 @@ export default function NoteEditor({
       setError('画像の生成中にエラーが発生しました。')
     } finally {
       setIsGeneratingImage(false)
+    }
+  }
+
+  const handleGenerateVideo = async () => {
+    if (generatedNotes.length === 0 || generatedNotes.every(note => !note)) {
+      setError('ノートが生成されていません。')
+      return
+    }
+
+    setIsGeneratingVideo(true)
+    setVideoProgress('動画生成を開始します...')
+    setVideoUrl(null)
+
+    try {
+      const allNotes = generatedNotes.filter(note => note).join('\n\n--- 次のページ ---\n\n')
+      const response = await axios.post('http://localhost:8000/generate-video', 
+        { note_content: allNotes }, 
+        {
+          onDownloadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              setVideoProgress(`動画生成中: ${percentCompleted}%`)
+            } else {
+              setVideoProgress(`動画生成中: ${progressEvent.loaded} バイト受信`)
+            }
+          }
+        }
+      )
+
+      // バックエンドから返されたビデオURLを使用
+      const videoDownloadUrl = `http://localhost:8000${response.data.video_url}`
+      setVideoUrl(videoDownloadUrl)
+      setVideoProgress('動画生成が完了しました。ダウンロードボタンをクリックしてください。')
+
+    } catch (error) {
+      console.error('動画の生成中にエラーが発生しました:', error)
+      if (axios.isAxiosError(error) && error.response) {
+        setError(`動画の生成中にエラーが発生しました。詳細: ${JSON.stringify(error.response.data)}`)
+      } else {
+        setError('動画の生成中に予期せぬエラーが発生しました。')
+      }
+    } finally {
+      setIsGeneratingVideo(false)
+    }
+  }
+
+  const handleDownloadVideo = () => {
+    if (videoUrl) {
+      const link = document.createElement('a')
+      link.href = videoUrl
+      link.download = 'generated_video.mp4' // ファイル名を設定
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     }
   }
 
@@ -392,7 +452,7 @@ export default function NoteEditor({
             size="sm" 
             variant="outline" 
             className="ml-2" 
-            disabled={isGeneratingImage}
+            disabled={isGeneratingImage || !generatedNotes[currentPage]}
           >
             {isGeneratingImage ? (
               <Loader2 className="animate-spin h-4 w-4" />
@@ -414,6 +474,40 @@ export default function NoteEditor({
           <Download className="h-4 w-4 mr-2" /> PDF出力
         </Button>
       </div>
+
+      {/* 動画生成セクション */}
+      <div className="flex items-center justify-between p-4 bg-gray-100 border-t border-b">
+        <span className="text-sm font-medium">動画生成</span>
+        {!videoUrl ? (
+          <Button 
+            onClick={handleGenerateVideo} 
+            size="sm" 
+            variant="outline" 
+            disabled={isGeneratingVideo}
+          >
+            {isGeneratingVideo ? (
+              <Loader2 className="animate-spin h-4 w-4" />
+            ) : (
+              '動画を生成'
+            )}
+          </Button>
+        ) : (
+          <Button 
+            onClick={handleDownloadVideo} 
+            size="sm" 
+            variant="outline"
+          >
+            動画をダウンロード
+          </Button>
+        )}
+      </div>
+
+      {/* 進捗表示 */}
+      {videoProgress && (
+        <div className="p-2 bg-blue-100 text-blue-800 text-sm">
+          {videoProgress}
+        </div>
+      )}
 
       {/* フォーマットツールバー */}
       {isEditing && (
