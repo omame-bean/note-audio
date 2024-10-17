@@ -477,7 +477,7 @@ export default function NoteEditor({
         setIsGeneratingVideo(false);
         setShowProgress(false);
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('動画生成リクエストのエラー:', err);
       setError('動画生成のリクエストに失敗しました。');
       setIsGeneratingVideo(false);

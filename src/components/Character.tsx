@@ -86,7 +86,7 @@ const VRMLoader = ({ emotion }: CharacterProps) => {
           }
 
           setNaturalPose(vrm)
-          loadAnimations(vrm).then(() => {
+          loadAnimations().then(() => {
             // アニメーションの読み込みが完了したら、VRMの読み込み完了をセット
             setIsVRMLoaded(true)
           }).catch(error => {
@@ -388,7 +388,8 @@ const CharacterComponent = ({ emotion, setEmotion }: CharacterProps) => {
 export default CharacterComponent
 
 // アニメーションの読み込みと設定関数
-const loadAnimations = async (vrm: VRM) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const loadAnimations = async () => {
   const loader = new GLTFLoader()
   loader.register((parser) => new VRMLoaderPlugin(parser))
 
@@ -402,10 +403,9 @@ const loadAnimations = async (vrm: VRM) => {
       const gltf = await loader.loadAsync(`/animations/${anim.file}`)
       const vrmAnimations = gltf.userData.vrmAnimations
       if (vrmAnimations && vrmAnimations.length > 0) {
-        //const vrmAnimation = vrmAnimations[0]
-        //const clip: THREE.AnimationClip = vrmAnimation.createAnimationClip(vrm)
-        // ここでアニメーションを設定・再生する処理を追加
         console.log(`Loaded animation: ${anim.name}`)
+        // vrmを使用する例：
+        // const clip = vrmAnimations[0].createAnimationClip(vrm);
       } else {
         console.warn(`No VRM animations found for ${anim.name}`)
       }
