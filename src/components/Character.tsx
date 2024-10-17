@@ -155,12 +155,10 @@ const VRMLoader = ({ emotion }: CharacterProps) => {
         if (vrmRef.current && vrmRef.current.expressionManager) {
           if (emotion !== 'happy') {  // happyの時は瞬きしない
             vrmRef.current.expressionManager.setValue('blink', 1.0)
-            console.log('Blink started')
             vrmRef.current.update(0)
             setTimeout(() => {
               if (vrmRef.current) {
                 vrmRef.current.expressionManager.setValue('blink', 0.0)
-                console.log('Blink ended')
                 vrmRef.current.update(0)
               }
             }, 100)

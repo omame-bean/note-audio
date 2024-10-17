@@ -32,6 +32,7 @@ export default function RootLayout({
           <header className="mb-8">
             <h1 className="text-4xl font-bold text-indigo-900 text-center">AI音声ノートアプリ</h1>
             <p className="text-xl text-indigo-700 text-center mt-2">音声からスマートノートを瞬時に作成</p>
+            <p className="text-xl text-indigo-700 text-center mt-2">ノート内容の解説動画も作成OK！</p>
           </header>
           <main className="bg-white shadow-xl rounded-lg overflow-visible">
             {children}

@@ -10,10 +10,12 @@
  * - SVG図と画像の生成と管理
  * - PDFエクスポート
  * - ズーム機能
+ * - 動画生成
  * 
  * このコンポーネントは、ユーザーがノートを作成、編集、および管理するための
  * 中心的なインターフェースを提供します。SVGEditorとImageEditorコンポーネントを
  * 統合し、テキスト、図、画像を含む総合的なノート作成環境を実現しています。
+ * また、生成されたノートコンテンツから動画を作成する機能も備えています。
  * 
  * @module NoteEditor
  */
@@ -129,7 +131,6 @@ export default function NoteEditor({
   const handleZoomIn = () => {
     setScale(prevScale => {
       const newScale = Math.min(prevScale + 0.1, 2)
-      console.log('Zoom In: ', newScale)
       return newScale
     })
   }
@@ -137,7 +138,6 @@ export default function NoteEditor({
   const handleZoomOut = () => {
     setScale(prevScale => {
       const newScale = Math.max(prevScale - 0.1, 0.5)
-      console.log('Zoom Out: ', newScale)
       return newScale
     })
   }
@@ -481,7 +481,7 @@ export default function NoteEditor({
 
       {/* 動画生成セクション */}
       <div className="flex items-center justify-between p-4 bg-gray-100 border-t border-b">
-        <span className="text-sm font-medium">動画生成(無料サーバー使用のため、生成には2～3分かかります)</span>
+        <span className="text-sm font-medium">動画生成（サーバーの関係で生成には4～5分かかります……）</span>
         {!videoUrl ? (
           <Button 
             onClick={handleGenerateVideo} 
