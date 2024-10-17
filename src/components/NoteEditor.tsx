@@ -53,6 +53,9 @@ interface NoteEditorProps {
   setImagePositions: React.Dispatch<React.SetStateAction<{ x: number; y: number }[]>> // 追加
 }
 
+// ファイルの先頭に以下を追加
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+
 export default function NoteEditor({
   generatedNotes,
   currentPage,
@@ -367,7 +370,7 @@ export default function NoteEditor({
 
     try {
       const allNotes = generatedNotes.filter(note => note).join('\n\n--- 次のページ ---\n\n')
-      const response = await axios.post('http://localhost:8000/generate-video', 
+      const response = await axios.post(`${BACKEND_URL}/generate-video`, 
         { note_content: allNotes }, 
         {
           onDownloadProgress: (progressEvent) => {
@@ -382,7 +385,7 @@ export default function NoteEditor({
       )
 
       // バックエンドから返されたビデオURLを使用
-      const videoDownloadUrl = `http://localhost:8000${response.data.video_url}`
+      const videoDownloadUrl = `${BACKEND_URL}${response.data.video_url}`
       setVideoUrl(videoDownloadUrl)
       setVideoProgress('動画生成が完了しました。ダウンロードボタンをクリックしてください。')
 
@@ -477,7 +480,7 @@ export default function NoteEditor({
 
       {/* 動画生成セクション */}
       <div className="flex items-center justify-between p-4 bg-gray-100 border-t border-b">
-        <span className="text-sm font-medium">動画生成</span>
+        <span className="text-sm font-medium">動画生成(無料サーバー使用のため、生成には2～3分かかります)</span>
         {!videoUrl ? (
           <Button 
             onClick={handleGenerateVideo} 
