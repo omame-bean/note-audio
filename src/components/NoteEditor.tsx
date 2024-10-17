@@ -117,8 +117,7 @@ export default function NoteEditor({
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([
     { step: 'テキスト解析', status: 'waiting' },
     { step: '背景選択', status: 'waiting' },
-    { step: '画像生成', status: 'waiting' },
-    { step: '音声合成', status: 'waiting' },
+    { step: '画像生成と音声合成', status: 'waiting' }, // 変更: 画像生成と音声合成を1つのステップに
     { step: '動画編集', status: 'waiting' },
     { step: '最終出力', status: 'waiting' },
   ]);
@@ -455,7 +454,9 @@ export default function NoteEditor({
 
           const { step, status, message, video_url } = data;
 
-          updateProgressStep(step, status, message, video_url);
+          // 画像生成と音声合成のステップを1つにまとめる
+          const updatedStep = step === '画像生成' || step === '音声合成' ? '画像生成と音声合成' : step;
+          updateProgressStep(updatedStep, status, message, video_url);
 
           if (step === "最終出力" && status === "completed" && video_url) {
             console.log("動画URL設定:", `${BACKEND_URL}${video_url}`);
