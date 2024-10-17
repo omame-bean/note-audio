@@ -27,13 +27,15 @@
     "react-dom": "^18",
     "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7",
-    "three": "^0.169.0"
+    "three": "^0.169.0",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@types/dom-speech-recognition": "^0.0.4",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.9.0",
     "@typescript-eslint/parser": "^8.9.0",
     "eslint": "^8",

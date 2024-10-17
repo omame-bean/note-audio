@@ -22,7 +22,7 @@
 
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Bold, Type, ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download, Highlighter, X, Loader2 } from 'lucide-react'
 import SVGEditor from '@/components/SVGEditor'
@@ -32,6 +32,8 @@ import { generateImage } from '../utils/imageUtils'
 import ImageEditor from './ImageEditor'
 import { handleExportPDF as exportPDF } from '../utils/noteUtils'
 import axios from 'axios'
+import VideoProgress from '@/components/VideoProgress';
+import { v4 as uuidv4 } from 'uuid'; // UUIDのインポート
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -58,11 +60,27 @@ interface NoteEditorProps {
 // ファイルの先頭に以下を追加
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
+// 進捗状況の型を定義
+type ProgressStep = {
+  step: string;
+  status: 'waiting' | 'in-progress' | 'completed' | 'error';
+  message?: string;
+  video_url?: string;
+};
+
+interface VideoRequest {
+  client_id: string;
+  note_content: string;
+}
+
+interface VideoResponse {
+  video_url: string;
+}
+
 export default function NoteEditor({
   generatedNotes,
   currentPage,
   setCurrentPage,
-  //noteRef,
   containerRef,
   updateNote,
   svgDiagrams,
@@ -93,6 +111,31 @@ export default function NoteEditor({
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false)
   const [videoProgress, setVideoProgress] = useState<string | null>(null)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [eventSource, setEventSource] = useState<EventSource | null>(null)
+
+  // 進捗状況の状態を更新
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([
+    { step: 'テキスト解析', status: 'waiting' },
+    { step: '背景選択', status: 'waiting' },
+    { step: '画像生成', status: 'waiting' },
+    { step: '音声合成', status: 'waiting' },
+    { step: '動画編集', status: 'waiting' },
+    { step: '最終出力', status: 'waiting' },
+  ]);
+
+  // 一意のclient_idを生成
+  const clientIdRef = useRef<string>(uuidv4());
+
+  const updateProgressStep = useCallback((step: string, status: ProgressStep['status'], message?: string, video_url?: string) => {
+    console.log(`ステップ更新: ${step} - ${status}`);
+    setProgressSteps(prevSteps =>
+      prevSteps.map(s => s.step === step ? { ...s, status, message, video_url } : s)
+    );
+  }, []);
+
+  useEffect(() => {
+    console.log('Progress steps updated:', progressSteps);
+  }, [progressSteps]);
 
   useEffect(() => {
     if (editorRef.current && !isEditing) {
@@ -290,10 +333,27 @@ export default function NoteEditor({
     })
   }
 
+  // error 状態を追加
+  const [error, setErrorState] = useState<string | null>(null);
+
+  // エラーを設定する関数
+  const handleSetError = (errorMessage: string | null) => {
+    setErrorState(errorMessage);
+    setError(errorMessage); // 親コンポーネントにもエラーを伝播
+  };
+
+  // 進捗表示
+  const [showProgress, setShowProgress] = useState(false);
+
   const handleGenerateSVG = async () => {
+    if (isGeneratingVideo) {
+      handleSetError('動画生成中はSVG生成できません。動画生成が完了するまでお待ちください。');
+      return;
+    }
+
     const selectedText = getSelectedText()
     if (!selectedText) {
-      setError('テキストが選択されていません。')
+      handleSetError('テキストが選択されていません。')
       return
     }
 
@@ -324,16 +384,21 @@ export default function NoteEditor({
       })
     } catch (error) {
       console.error('SVG図の生成中にエラーが発生しました:', error)
-      setError('SVGの生成中にエラーが発生しました。')
+      handleSetError('SVGの生成中にエラーが発生しました。')
     } finally {
       setIsGeneratingSVG(false) // 生成終了時に状態をリセット
     }
   }
 
   const handleGenerateImage = async () => {
+    if (isGeneratingVideo) {
+      handleSetError('動画生成中は画像生成できません。動画生成が完了するまでお待ちください。');
+      return;
+    }
+
     const selectedText = getSelectedText()
     if (!selectedText) {
-      setError('テキストが選択されていません。')
+      handleSetError('テキストが選択されていません。')
       return
     }
 
@@ -352,66 +417,88 @@ export default function NoteEditor({
       })
     } catch (error) {
       console.error('画像の生成中にエラーが発生しました:', error)
-      setError('画像の生成中にエラーが発生しました。')
+      handleSetError('画像の生成中にエラーが発生しました。')
     } finally {
       setIsGeneratingImage(false)
     }
   }
 
   const handleGenerateVideo = async () => {
-    if (generatedNotes.length === 0 || generatedNotes.every(note => !note)) {
-      setError('ノートが生成されていません。')
-      return
-    }
+    setIsGeneratingVideo(true);
+    setError(null);
+    setVideoUrl(null);
+    setVideoProgress("動画生成を開始します...");
+    setShowProgress(true);
 
-    setIsGeneratingVideo(true)
-    setVideoProgress('動画生成を開始します...')
-    setVideoUrl(null)
+    const currentNoteContent = generatedNotes[currentPage] || "";
+
+    const videoRequest: VideoRequest = {
+      client_id: clientIdRef.current,
+      note_content: currentNoteContent,
+    };
 
     try {
-      const allNotes = generatedNotes.filter(note => note).join('\n\n--- 次のページ ---\n\n')
-      const response = await axios.post(`${BACKEND_URL}/generate-video`, 
-        { note_content: allNotes }, 
-        {
-          timeout: 0, 
-          onDownloadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-              setVideoProgress(`動画生成中: ${percentCompleted}%`)
-            } else {
-              setVideoProgress(`動画生成中: ${progressEvent.loaded} バイト受信`)
-            }
+      await axios.post<VideoResponse>(`${BACKEND_URL}/generate-video`, videoRequest);
+
+      const newEventSource = new EventSource(`${BACKEND_URL}/events/${clientIdRef.current}`);
+      setEventSource(newEventSource);
+
+      newEventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.error) {
+            setError(data.error);
+            setIsGeneratingVideo(false);
+            newEventSource.close();
+            return;
           }
+
+          const { step, status, message, video_url } = data;
+
+          updateProgressStep(step, status, message, video_url);
+
+          if (step === "最終出力" && status === "completed" && video_url) {
+            console.log("動画URL設定:", `${BACKEND_URL}${video_url}`);
+            setVideoUrl(`${BACKEND_URL}${video_url}`);
+            setIsGeneratingVideo(false);
+            setShowProgress(false);
+          }
+        } catch (err) {
+          console.error('進捗データの解析エラー:', err, '問題のあるデータ:', event.data);
+          setError('進捗データの解析に失敗しました。');
         }
-      )
+      };
 
-      // バックエンドから返されたビデオURLを使用
-      const videoDownloadUrl = `${BACKEND_URL}${response.data.video_url}`
-      setVideoUrl(videoDownloadUrl)
-      setVideoProgress('動画生成が完了しました。ダウンロードボタンをクリックしてください。')
-
-    } catch (error) {
-      console.error('動画の生成中にエラーが発生しました:', error)
-      if (axios.isAxiosError(error) && error.response) {
-        setError(`動画の生成中にエラーが発生しました。詳細: ${JSON.stringify(error.response.data)}`)
-      } else {
-        setError('動画の生成中に予期せぬエラーが発生しました。')
-      }
-    } finally {
-      setIsGeneratingVideo(false)
+      newEventSource.onerror = (err) => {
+        console.error('SSE エラー:', err);
+        newEventSource.close();
+        setEventSource(null);
+        setIsGeneratingVideo(false);
+        setShowProgress(false);
+      };
+    } catch (err: any) {
+      console.error('動画生成リクエストのエラー:', err);
+      setError('動画生成のリクエストに失敗しました。');
+      setIsGeneratingVideo(false);
+      setShowProgress(false);
     }
-  }
+  };
 
   const handleDownloadVideo = () => {
     if (videoUrl) {
-      const link = document.createElement('a')
-      link.href = videoUrl
-      link.download = 'generated_video.mp4' // ファイル名を設定
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      console.log("動画ダウンロード開始:", videoUrl);
+      // URLSearchParamsを使用してクエリパラメータを正しく追加
+      const url = new URL(videoUrl, BACKEND_URL);
+      url.searchParams.append('client_id', clientIdRef.current);
+      window.open(url.toString(), '_blank');
+      
+      // ダウンロード開始後にEventSourceを閉じる
+      if (eventSource) {
+        eventSource.close();
+        setEventSource(null);
+      }
     }
-  }
+  };
 
   // 選択されたテキストを取得する関数
   const getSelectedText = (): string => {
@@ -423,6 +510,8 @@ export default function NoteEditor({
     }
     return ''
   }
+
+
 
   return (
     <div className="w-full md:w-2/3 bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
@@ -482,7 +571,15 @@ export default function NoteEditor({
       {/* 動画生成セクション */}
       <div className="flex items-center justify-between p-4 bg-gray-100 border-t border-b">
         <span className="text-sm font-medium">動画生成（サーバーの関係で生成には4～5分かかります……）</span>
-        {!videoUrl ? (
+        {videoUrl ? (
+          <Button 
+            onClick={handleDownloadVideo} 
+            size="sm" 
+            variant="outline"
+          >
+            動画をダウンロード
+          </Button>
+        ) : (
           <Button 
             onClick={handleGenerateVideo} 
             size="sm" 
@@ -495,22 +592,15 @@ export default function NoteEditor({
               '動画を生成'
             )}
           </Button>
-        ) : (
-          <Button 
-            onClick={handleDownloadVideo} 
-            size="sm" 
-            variant="outline"
-          >
-            動画をダウンロード
-          </Button>
         )}
       </div>
 
+      {/* エラーメッセージ表示 */}
+      {error && <p className="text-red-500">{error}</p>}
+
       {/* 進捗表示 */}
-      {videoProgress && (
-        <div className="p-2 bg-blue-100 text-blue-800 text-sm">
-          {videoProgress}
-        </div>
+      {showProgress && (
+        <VideoProgress progressSteps={progressSteps} videoProgress={videoProgress} />
       )}
 
       {/* フォーマットツールバー */}
