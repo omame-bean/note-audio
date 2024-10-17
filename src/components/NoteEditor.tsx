@@ -373,7 +373,7 @@ export default function NoteEditor({
       const response = await axios.post(`${BACKEND_URL}/generate-video`, 
         { note_content: allNotes }, 
         {
-          timeout: 1800000, 
+          timeout: 0, 
           onDownloadProgress: (progressEvent) => {
             if (progressEvent.total) {
               const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
