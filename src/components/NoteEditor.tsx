@@ -39,6 +39,8 @@ import VideoProgress from '@/components/VideoProgress';
 import { v4 as uuidv4 } from 'uuid'; // UUIDのインポート
 // 既存のインポートに追加
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+// toast のインポートを削除または一時的にコメントアウト
+// import { toast } from "@/components/ui/use-toast"
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -220,6 +222,12 @@ export default function NoteEditor({
   }
 
   const handleExportPDFClick = () => {
+    if (generatedNotes.length === 0 || generatedNotes.every(note => !note)) {
+      // toast の代わりに alert を使用
+      alert("ノートがありません。PDFを出力する前にノートを生成してください。");
+      return;
+    }
+
     // 配列の長さを生成ノートに合わせて統一
     const maxLength = generatedNotes.length
 
@@ -587,7 +595,12 @@ export default function NoteEditor({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button onClick={handleExportPDFClick} size="sm" className="mt-2 sm:mt-0">
+        <Button 
+          onClick={handleExportPDFClick} 
+          size="sm" 
+          className="mt-2 sm:mt-0"
+          disabled={generatedNotes.length === 0 || generatedNotes.every(note => !note)}
+        >
           <Download className="h-4 w-4 mr-2" /> PDF出力
         </Button>
       </div>
