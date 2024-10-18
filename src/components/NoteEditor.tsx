@@ -34,6 +34,8 @@ import { handleExportPDF as exportPDF } from '../utils/noteUtils'
 import axios from 'axios'
 import VideoProgress from '@/components/VideoProgress';
 import { v4 as uuidv4 } from 'uuid'; // UUIDのインポート
+// 既存のインポートに追加
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -71,6 +73,7 @@ type ProgressStep = {
 interface VideoRequest {
   client_id: string;
   note_content: string;
+  video_type: 'landscape' | 'portrait';
 }
 
 interface VideoResponse {
@@ -99,6 +102,8 @@ export default function NoteEditor({
 }: NoteEditorProps) {
   // スケールの初期値を0.9に設定
   const [scale, setScale] = useState(0.9)
+
+  const [videoType, setVideoType] = useState<'landscape' | 'portrait'>('landscape');
 
   const [isEditing, setIsEditing] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
@@ -434,6 +439,7 @@ export default function NoteEditor({
     const videoRequest: VideoRequest = {
       client_id: clientIdRef.current,
       note_content: currentNoteContent,
+      video_type: videoType, // 選択された videoType を使用
     };
 
     try {
@@ -449,12 +455,12 @@ export default function NoteEditor({
             setError(data.error);
             setIsGeneratingVideo(false);
             newEventSource.close();
+            setEventSource(null);
             return;
           }
 
           const { step, status, message, video_url } = data;
 
-          // 画像生成と音声合成のステップを1つにまとめる
           const updatedStep = step === '画像生成' || step === '音声合成' ? '画像生成と音声合成' : step;
           updateProgressStep(updatedStep, status, message, video_url);
 
@@ -477,6 +483,7 @@ export default function NoteEditor({
         setIsGeneratingVideo(false);
         setShowProgress(false);
       };
+
     } catch (err: unknown) {
       console.error('動画生成リクエストのエラー:', err);
       setError('動画生成のリクエストに失敗しました。');
@@ -488,7 +495,6 @@ export default function NoteEditor({
   const handleDownloadVideo = () => {
     if (videoUrl) {
       console.log("動画ダウンロード開始:", videoUrl);
-      // URLSearchParamsを使用してクエリパラメータを正しく追加
       const url = new URL(videoUrl, BACKEND_URL);
       url.searchParams.append('client_id', clientIdRef.current);
       window.open(url.toString(), '_blank');
@@ -571,29 +577,40 @@ export default function NoteEditor({
 
       {/* 動画生成セクション */}
       <div className="flex items-center justify-between p-4 bg-gray-100 border-t border-b">
-        <span className="text-sm font-medium">動画生成（サーバーの関係で生成には4～5分かかります……）</span>
-        {videoUrl ? (
-          <Button 
-            onClick={handleDownloadVideo} 
-            size="sm" 
-            variant="outline"
-          >
-            動画をダウンロード
-          </Button>
-        ) : (
-          <Button 
-            onClick={handleGenerateVideo} 
-            size="sm" 
-            variant="outline" 
-            disabled={isGeneratingVideo}
-          >
-            {isGeneratingVideo ? (
-              <Loader2 className="animate-spin h-4 w-4" />
-            ) : (
-              '動画を生成'
-            )}
-          </Button>
-        )}
+        <span className="text-sm font-medium">動画生成（生成に2～3分かかります）</span>
+        <div className="flex items-center space-x-2">
+          <Select value={videoType} onValueChange={(value: 'landscape' | 'portrait') => setVideoType(value)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="動画タイプを選択" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="landscape">パソコン動画</SelectItem>
+              <SelectItem value="portrait">スマホ動画</SelectItem>
+            </SelectContent>
+          </Select>
+          {videoUrl ? (
+            <Button 
+              onClick={handleDownloadVideo} 
+              size="sm" 
+              variant="outline"
+            >
+              動画をダウンロード
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleGenerateVideo} 
+              size="sm" 
+              variant="outline" 
+              disabled={isGeneratingVideo}
+            >
+              {isGeneratingVideo ? (
+                <Loader2 className="animate-spin h-4 w-4" />
+              ) : (
+                '動画を生成'
+              )}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* エラーメッセージ表示 */}
