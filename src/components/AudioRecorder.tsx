@@ -227,7 +227,7 @@ export default function AudioRecorder({
       {/* VRMキャラクターの表示をトグルの外側に移動 */}
       <div className="character-container">
         <div className="text-center mb-2 font-semibold">
-          ナビゲーター：ここる
+          ナビゲーター：こはる
         </div>
         <Character emotion={emotion} setEmotion={setEmotion} />
       </div>
@@ -277,7 +277,7 @@ export default function AudioRecorder({
               </li>
               <li>
                 <strong>動画生成:</strong>
-                <p className="ml-4">生成されたノートから動画を作成できます。「動画を生成」ボタンをクリックすると、ノートの内容を基に動画が生成されます。生成には5分程度かかります。生成が完了すると、動画をダウンロードできます。</p>
+                <p className="ml-4">生成されたノートから動画を作成できます。「動画タイプを選択」ドロップダウンメニューから、パソコン用（横向き）またはスマホ用（縦向き）の動画形式を選択できます。「動画を生成」ボタンをクリックすると、選択したタイプでノートの内容を基に動画が生成されます。生成には2～3分程度かかります。生成が完了すると、動画をダウンロードできます。</p>
               </li>
               <li>
                 <strong>制限事項:</strong>

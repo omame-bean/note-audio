@@ -10,12 +10,15 @@
  * - SVG図と画像の生成と管理
  * - PDFエクスポート
  * - ズーム機能
- * - 動画生成
+ * - 動画生成（パソコン用横向きおよびスマホ用縦向き動画に対応）
  * 
  * このコンポーネントは、ユーザーがノートを作成、編集、および管理するための
  * 中心的なインターフェースを提供します。SVGEditorとImageEditorコンポーネントを
  * 統合し、テキスト、図、画像を含む総合的なノート作成環境を実現しています。
- * また、生成されたノートコンテンツから動画を作成する機能も備えています。
+ * また、生成されたノートコンテンツから動画を作成する機能も備えており、
+ * パソコン用の横向き動画とスマホ用の縦向き動画の両方に対応しています。
+ * ユーザーは動画タイプを選択し、ノートの内容に基づいて適切な形式の動画を
+ * 生成することができます。
  * 
  * @module NoteEditor
  */
@@ -53,10 +56,10 @@ interface NoteEditorProps {
   setError: React.Dispatch<React.SetStateAction<string | null>>
   generatedImages: (string | null)[]
   setGeneratedImages: React.Dispatch<React.SetStateAction<(string | null)[]>>
-  imageScales: number[] // 追加
-  setImageScales: React.Dispatch<React.SetStateAction<number[]>> // 追加
-  imagePositions: { x: number; y: number }[] // 追加
-  setImagePositions: React.Dispatch<React.SetStateAction<{ x: number; y: number }[]>> // 追加
+  imageScales: number[]
+  setImageScales: React.Dispatch<React.SetStateAction<number[]>>
+  imagePositions: { x: number; y: number }[]
+  setImagePositions: React.Dispatch<React.SetStateAction<{ x: number; y: number }[]>>
 }
 
 // ファイルの先頭に以下を追加
@@ -349,19 +352,27 @@ export default function NoteEditor({
   // 進捗表示
   const [showProgress, setShowProgress] = useState(false);
 
+  // エラーメッセージをクリアする関数を追加
+  const clearError = () => {
+    setErrorState(null);
+    setError(null);
+  };
+
+  // handleGenerateSVG 関数を更新
   const handleGenerateSVG = async () => {
-    if (isGeneratingVideo) {
+    if (isGeneratingVideo && !videoUrl) {
       handleSetError('動画生成中はSVG生成できません。動画生成が完了するまでお待ちください。');
       return;
     }
 
+    // 以下は既存のコード
     const selectedText = getSelectedText()
     if (!selectedText) {
       handleSetError('テキストが選択されていません。')
       return
     }
 
-    setIsGeneratingSVG(true) // 生成開始時に状態を設定
+    setIsGeneratingSVG(true)
 
     try {
       const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
@@ -390,16 +401,18 @@ export default function NoteEditor({
       console.error('SVG図の生成中にエラーが発生しました:', error)
       handleSetError('SVGの生成中にエラーが発生しました。')
     } finally {
-      setIsGeneratingSVG(false) // 生成終了時に状態をリセット
+      setIsGeneratingSVG(false)
     }
   }
 
+  // handleGenerateImage 関数を更新
   const handleGenerateImage = async () => {
-    if (isGeneratingVideo) {
+    if (isGeneratingVideo && !videoUrl) {
       handleSetError('動画生成中は画像生成できません。動画生成が完了するまでお待ちください。');
       return;
     }
 
+    // 以下は既存のコード
     const selectedText = getSelectedText()
     if (!selectedText) {
       handleSetError('テキストが選択されていません。')
@@ -429,7 +442,7 @@ export default function NoteEditor({
 
   const handleGenerateVideo = async () => {
     setIsGeneratingVideo(true);
-    setError(null);
+    clearError(); // エラーメッセージをクリア
     setVideoUrl(null);
     setVideoProgress("動画生成を開始します...");
     setShowProgress(true);
@@ -469,6 +482,7 @@ export default function NoteEditor({
             setVideoUrl(`${BACKEND_URL}${video_url}`);
             setIsGeneratingVideo(false);
             setShowProgress(false);
+            clearError(); // 動画URL設定時にエラーメッセージをクリア
           }
         } catch (err) {
           console.error('進捗データの解析エラー:', err, '問題のあるデータ:', event.data);
@@ -504,6 +518,9 @@ export default function NoteEditor({
         eventSource.close();
         setEventSource(null);
       }
+      
+      clearError(); // エラーメッセージをクリア
+      setIsGeneratingVideo(false); // 動画生成状態をリセット
     }
   };
 
@@ -576,11 +593,11 @@ export default function NoteEditor({
       </div>
 
       {/* 動画生成セクション */}
-      <div className="flex items-center justify-between p-4 bg-gray-100 border-t border-b">
-        <span className="text-sm font-medium">動画生成（生成に2～3分かかります）</span>
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-col p-4 bg-gray-100 border-t border-b">
+        <span className="text-sm font-medium mb-2">動画生成（生成に2～3分かかります）</span>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
           <Select value={videoType} onValueChange={(value: 'landscape' | 'portrait') => setVideoType(value)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="動画タイプを選択" />
             </SelectTrigger>
             <SelectContent>
@@ -592,7 +609,8 @@ export default function NoteEditor({
             <Button 
               onClick={handleDownloadVideo} 
               size="sm" 
-              variant="outline"
+              variant="outline" 
+              className="w-full sm:w-auto"
             >
               動画をダウンロード
             </Button>
@@ -602,6 +620,7 @@ export default function NoteEditor({
               size="sm" 
               variant="outline" 
               disabled={isGeneratingVideo}
+              className="w-full sm:w-auto"
             >
               {isGeneratingVideo ? (
                 <Loader2 className="animate-spin h-4 w-4" />
@@ -614,7 +633,7 @@ export default function NoteEditor({
       </div>
 
       {/* エラーメッセージ表示 */}
-      {error && <p className="text-red-500">{error}</p>}
+      {error && !videoUrl && <p className="text-red-500">{error}</p>}
 
       {/* 進捗表示 */}
       {showProgress && (
