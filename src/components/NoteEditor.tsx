@@ -38,6 +38,7 @@ import VideoProgress from '@/components/VideoProgress';
 import { v4 as uuidv4 } from 'uuid'; // UUIDのインポート
 // 既存のインポートに追加
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import '../styles/NoteEditor.css';
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -268,7 +269,7 @@ export default function NoteEditor({
         applyFormat('bold')
         break
       case 'large-text':
-        applyFormat('fontSize', '5') // 2px大きくするために'5'を使用
+        applyFormat('fontSize', '4') // 2px大きくするために'5'を使用
         break
       case 'removeFormat':
         applyFormat('removeFormat')
@@ -677,17 +678,16 @@ export default function NoteEditor({
       {/* ノート表示エリア */}
       <div ref={containerRef} className="flex-grow overflow-auto relative bg-gray-200 py-4">
         <div
-          className="w-full"
+          className="note-container"
           style={{
-            maxWidth: '210mm',
+            width: '210mm',
+            height: '297mm',
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
-            height: '297mm',
             overflow: 'visible',
             border: '2px solid #00b0d7',
             boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
             backgroundColor: '#fff',
-            minWidth: '210mm',
           }}
         >
           <div
@@ -695,34 +695,15 @@ export default function NoteEditor({
             contentEditable={isEditing}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            className="shadow-lg bg-white note-content relative"
-            style={{
-              width: '210mm',
-              height: '297mm',
-              padding: '0',
-              boxSizing: 'border-box',
-              fontFamily: '"Zen Kurenaido", sans-serif',
-              fontSize: '16px',
-              lineHeight: '40px',
-              background: 'linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px)',
-              backgroundSize: '100% 40px',
-              backgroundAttachment: 'local',
-              overflow: 'hidden',
-              wordWrap: 'break-word',
-            }}
+            className="note-content"
             suppressContentEditableWarning={true}
           >
-            <div style={{
-              width: '200mm',
-              margin: '0 auto',
-              padding: '0 5mm',
-              boxSizing: 'border-box',
-            }}>
+            <div className="note-content-inner">
               {/* ノートのHTMLコンテンツ */}
             </div>
           </div>
           
-          {/* SVGEditor を直接レンダリング */}
+          {/* SVGEditor と ImageEditor はここに残します */}
           {svgDiagrams[currentPage] && (
             <SVGEditor
               svgContent={svgDiagrams[currentPage]!}
@@ -731,12 +712,11 @@ export default function NoteEditor({
               onDelete={handleSvgDelete}
               scale={svgScales[currentPage]}
               onPositionChange={handleSvgPositionChange}
-              parentScale={scale} // 親のスケールを渡す
+              parentScale={scale}
               initialPosition={svgPositions[currentPage] || { x: 0, y: 0 }}
             />
           )}
           
-          {/* ImageEditor も同様に直接レンダリング */}
           {generatedImages[currentPage] && (
             <ImageEditor
               imageUrl={generatedImages[currentPage]!}

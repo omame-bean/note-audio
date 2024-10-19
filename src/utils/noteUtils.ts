@@ -17,6 +17,8 @@
 
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
+import noteEditorStyles from '../styles/NoteEditor.css';
+const styles = noteEditorStyles as { [key: string]: string };
 
 // A4サイズとレイアウトの定数
 const PAGE_HEIGHT = 297; // A4サイズの高さ（mm）
@@ -124,52 +126,7 @@ const estimateElementHeight = (element: Element): number => {
 // ページコンテンツをHTMLでラップする関数を更新
 const wrapPageContent = (content: string, pageNumber: number): string => {
   return `
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap');
-      .note-content {
-        font-family: 'Zen Kurenaido', sans-serif;
-        font-size: 16px;
-        line-height: 40px;
-        width: 210mm;
-        height: 297mm;
-        position: relative;
-        background: linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px);
-        background-size: 100% 40px;
-        background-position: 0 -4px; /* 背景の罫線を4px下に移動 */
-        box-sizing: border-box;
-      }
-      .note-content-inner {
-        width: 200mm;
-        margin: 0 auto;
-        padding: 0 5mm;
-        box-sizing: border-box;
-        position: relative;
-        top: -4px; /* コンテンツを4px上に移動 */
-      }
-      .highlight {
-        background-color: yellow;
-      }
-      .red-text {
-        color: red;
-      }
-      .blue-text {
-        color: blue;
-      }
-      b, strong {
-        font-weight: bold;
-      }
-      [style*="font-size: larger"] {
-        font-size: 18px; /* 2px大きく */
-        line-height: 1.0;
-      }
-      .page-number {
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        font-size: 14px;
-        color: #666;
-      }
-    </style>
+    <style>${Object.entries(styles).map(([key, value]) => `.${key} { ${value} }`).join('\n')}</style>
     <div class="note-content">
       <div class="note-content-inner">
         ${content}

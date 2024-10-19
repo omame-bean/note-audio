@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap');
+
+.note-content {
+  font-family: 'Zen Kurenaido', sans-serif;
+  font-size: 16px;
+  line-height: 40px;
+  width: 210mm;
+  height: 297mm;
+  position: relative;
+  background: linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px);
+  background-size: 100% 40px;
+  background-position: 0 -4px; 
+  box-sizing: border-box;
+}
+
+.note-content-inner {
+  width: 200mm;
+  margin: 0 auto;
+  padding: 0;
+  box-sizing: border-box;
+  position: relative;
+  top: -4px;
+}
+
+.highlight {
+  background-color: yellow;
+}
+
+.red-text {
+  color: red;
+}
+
+.blue-text {
+  color: blue;
+}
+
+b, strong {
+  font-weight: bold;
+}
+
+[style*="font-size: larger"] {
+  font-size: 18px;
+  line-height: 1.0;
+}
+
+.page-number {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  font-size: 14px;
+  color: #666;
+}
