@@ -16,7 +16,7 @@
  * @module ImageEditor
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { X, ZoomIn, ZoomOut } from 'lucide-react'
 import Image from 'next/image'
@@ -56,30 +56,45 @@ export default function ImageEditor({
     console.log('Scale updated:', scale)
   }, [scale])
 
+  const handleStart = useCallback((clientX: number, clientY: number) => {
+    setIsDragging(true)
+    setInitialMousePos({ x: clientX, y: clientY })
+    setInitialPositionState({ ...position })
+    console.log('Drag start:', { x: clientX, y: clientY })
+  }, [position])
+
+  const handleMove = useCallback((clientX: number, clientY: number) => {
+    if (isDragging && isEditing) {
+      const deltaX = (clientX - initialMousePos.x) / parentScale
+      const deltaY = (clientY - initialMousePos.y) / parentScale
+      const newX = initialPositionState.x + deltaX
+      const newY = initialPositionState.y + deltaY
+      const newPosition = { x: newX, y: newY }
+      setPosition(newPosition)
+      onPositionChange(newPosition)
+      console.log('Dragging:', { newPosition })
+    }
+  }, [isDragging, isEditing, initialMousePos, initialPositionState, parentScale, onPositionChange])
+
+  const handleEnd = useCallback(() => {
+    setIsDragging(false)
+    console.log('Drag end')
+  }, [])
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isEditing) {
-      setIsDragging(true)
-      setInitialMousePos({ x: e.clientX, y: e.clientY })
-      setInitialPositionState({ ...position })
-      console.log('Mouse down:', { x: e.clientX, y: e.clientY })
+      handleStart(e.clientX, e.clientY)
     }
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && isEditing) {
-      const deltaX = (e.clientX - initialMousePos.x) / parentScale
-      const deltaY = (e.clientY - initialMousePos.y) / parentScale
-      const newX = initialPositionState.x + deltaX
-      const newY = initialPositionState.y + deltaY
-      setPosition({ x: newX, y: newY })
-      onPositionChange({ x: newX, y: newY })
-      console.log('Mouse move:', { x: newX, y: newY })
+    if (isEditing) {
+      handleMove(e.clientX, e.clientY)
     }
   }
 
   const handleMouseUp = () => {
-    setIsDragging(false)
-    console.log('Mouse up')
+    handleEnd()
   }
 
   const handleMouseEnter = () => {
@@ -105,6 +120,27 @@ export default function ImageEditor({
     console.log('Zoom out:', newScale)
   }
 
+  // 新規追加: タッチイベントハンドラー
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (isEditing && e.touches.length === 1) {
+      e.preventDefault() // 追加: デフォルトのタッチ動作を防止
+      const touch = e.touches[0]
+      handleStart(touch.clientX, touch.clientY)
+    }
+  }, [isEditing, handleStart])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (isEditing && e.touches.length === 1) {
+      e.preventDefault() // 追加: デフォルトのタッチ動作を防止
+      const touch = e.touches[0]
+      handleMove(touch.clientX, touch.clientY)
+    }
+  }, [isEditing, handleMove])
+
+  const handleTouchEnd = () => {
+    handleEnd()
+  }
+
   return (
     <div 
       style={{
@@ -117,12 +153,17 @@ export default function ImageEditor({
         pointerEvents: isEditing ? 'auto' : 'none',
         width: '512px',
         height: '512px',
+        touchAction: 'none', // 追加: タッチ操作時のスクロールを防止
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       //onMouseLeave={handleMouseLeave}
       onMouseEnter={handleMouseEnter}
+      // 新規追加: タッチイベントを追加
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       <Image
         src={imageUrl}

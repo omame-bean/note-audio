@@ -45,7 +45,6 @@ export default function SVGEditor({
   const [position, setPosition] = useState(initialPosition || { x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const [showControls, setShowControls] = useState(false)
   const [svgSize, setSvgSize] = useState({ width: 512, height: 512 }) // デフォルトサイズを設定
   const svgRef = useRef<HTMLDivElement>(null)
 
@@ -76,45 +75,68 @@ export default function SVGEditor({
     }
   }, [svgContent]) // svgContentが変更されたときに実行
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (isEditing) {
-      e.preventDefault()
-      setIsDragging(true)
-      setDragStart({ x: e.clientX / parentScale - position.x, y: e.clientY / parentScale - position.y }) // 親のスケールを考慮
-      console.log('Mouse down:', { x: e.clientX, y: e.clientY, isEditing, dragStart: { x: e.clientX / parentScale - position.x, y: e.clientY / parentScale - position.y } })
-    }
-  }, [isEditing, position, parentScale])
+  const handleStart = useCallback((clientX: number, clientY: number) => {
+    setIsDragging(true)
+    setDragStart({ x: clientX / parentScale - position.x, y: clientY / parentScale - position.y })
+    console.log('Drag start:', { x: clientX, y: clientY })
+  }, [parentScale, position])
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+  const handleMove = useCallback((clientX: number, clientY: number) => {
     if (isDragging && isEditing) {
-      e.preventDefault()
       const effectiveParentScale = parentScale || 1
-      const newX = e.clientX / effectiveParentScale - dragStart.x
-      const newY = e.clientY / effectiveParentScale - dragStart.y
+      const newX = clientX / effectiveParentScale - dragStart.x
+      const newY = clientY / effectiveParentScale - dragStart.y
       const newPosition = { x: newX, y: newY }
       setPosition(newPosition)
       onPositionChange(newPosition)
-      console.log('Mouse move:', { newPosition, isDragging, isEditing, effectiveParentScale })
+      console.log('Dragging:', { newPosition })
     }
   }, [isDragging, isEditing, dragStart, parentScale, onPositionChange])
 
-  const handleMouseUp = useCallback(() => {
+  const handleEnd = useCallback(() => {
     setIsDragging(false)
-    console.log('Mouse up')
+    console.log('Drag end')
   }, [])
 
-  const handleMouseLeave = useCallback(() => {
-    setIsDragging(false)
-    setShowControls(false)
-    console.log('Mouse leave')
-  }, [])
-
-  const handleMouseEnter = useCallback(() => {
+  // 既存の handleMouseDown, handleMouseMove, handleMouseUp を以下のように修正または追加
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (isEditing) {
-      setShowControls(true)
+      e.preventDefault()
+      handleStart(e.clientX, e.clientY)
     }
-    console.log('Mouse enter:', { isEditing })
-  }, [isEditing])
+  }, [isEditing, handleStart])
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isEditing) {
+      e.preventDefault()
+      handleMove(e.clientX, e.clientY)
+    }
+  }, [isEditing, handleMove])
+
+  const handleMouseUp = useCallback(() => {
+    handleEnd()
+  }, [handleEnd])
+
+  // 新規追加: タッチイベントハンドラー
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (isEditing && e.touches.length === 1) {
+      e.preventDefault() // 追加: デフォルトのタッチ動作を防止
+      const touch = e.touches[0]
+      handleStart(touch.clientX, touch.clientY)
+    }
+  }, [isEditing, handleStart])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (isEditing && e.touches.length === 1) {
+      e.preventDefault() // 追加: デフォルトのタッチ動作を防止
+      const touch = e.touches[0]
+      handleMove(touch.clientX, touch.clientY)
+    }
+  }, [isEditing, handleMove])
+
+  const handleTouchEnd = useCallback(() => {
+    handleEnd()
+  }, [handleEnd])
 
   const handleZoomIn = useCallback(() => {
     const newScale = Math.min(scale + 0.1, 2)
@@ -143,12 +165,15 @@ export default function SVGEditor({
         width: `${svgSize.width}px`,
         height: `${svgSize.height}px`,
         userSelect: 'none',
+        touchAction: 'none', // 追加: タッチ操作時のスクロールを防止
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
-      onMouseEnter={handleMouseEnter}
+      // 新規追加: タッチイベントを追加
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       <div
         ref={svgRef}
@@ -159,7 +184,7 @@ export default function SVGEditor({
           pointerEvents: 'none',
         }}
       />
-      {isEditing && showControls && (
+      {isEditing && (
         <div 
           className="absolute top-0 left-0 flex space-x-1"
           style={{ transform: `scale(${1 / scale})`, transformOrigin: 'top left' }}
