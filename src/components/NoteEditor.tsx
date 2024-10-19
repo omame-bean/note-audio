@@ -28,10 +28,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Bold, Type, ZoomIn, ZoomOut, Edit, ChevronLeft, ChevronRight, Download, Highlighter, X, Loader2 } from 'lucide-react'
-import SVGEditor from '@/components/SVGEditor'
+import SVGEditor from '../components/SVGEditor'
 import { generateSVGDiagram } from '../utils/svgUtils'
 import { generateImage } from '../utils/imageUtils'
-//import Image from 'next/image'
 import ImageEditor from './ImageEditor'
 import { handleExportPDF as exportPDF } from '../utils/noteUtils'
 import axios from 'axios'
@@ -39,8 +38,6 @@ import VideoProgress from '@/components/VideoProgress';
 import { v4 as uuidv4 } from 'uuid'; // UUIDのインポート
 // 既存のインポートに追加
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-// toast のインポートを削除または一時的にコメントアウト
-// import { toast } from "@/components/ui/use-toast"
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -521,7 +518,7 @@ export default function NoteEditor({
       url.searchParams.append('client_id', clientIdRef.current);
       window.open(url.toString(), '_blank');
       
-      // ダウンロード開始後にEventSourceを閉じる
+      // ダウンロード開始後にEventSourceをじる
       if (eventSource) {
         eventSource.close();
         setEventSource(null);
@@ -687,9 +684,9 @@ export default function NoteEditor({
             transformOrigin: 'top left',
             height: '297mm',
             overflow: 'visible',
-            border: '2px solid #00b0d7', // 境界を明確にするためのボーダー追加
-            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // 輪郭を際立たせるためのシャドウ追加
-            backgroundColor: '#fff', // 背景色を白に設定
+            border: '2px solid #00b0d7',
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+            backgroundColor: '#fff',
             minWidth: '210mm',
           }}
         >
@@ -724,26 +721,22 @@ export default function NoteEditor({
               {/* ノートのHTMLコンテンツ */}
             </div>
           </div>
+          
+          {/* SVGEditor を直接レンダリング */}
           {svgDiagrams[currentPage] && (
-            <div
-              className="absolute"
-              style={{
-                left: `${svgPositions[currentPage].x}px`,
-                top: `${svgPositions[currentPage].y}px`,
-                transform: `scale(${svgScales[currentPage]})`,
-                transformOrigin: 'top left',
-              }}
-            >
-              <SVGEditor
-                svgContent={svgDiagrams[currentPage]!}
-                isEditing={isEditing}
-                onUpdate={handleSvgScaleUpdate}
-                onDelete={handleSvgDelete}
-                scale={svgScales[currentPage]}
-                onPositionChange={handleSvgPositionChange}
-              />
-            </div>
+            <SVGEditor
+              svgContent={svgDiagrams[currentPage]!}
+              isEditing={isEditing}
+              onUpdate={handleSvgScaleUpdate}
+              onDelete={handleSvgDelete}
+              scale={svgScales[currentPage]}
+              onPositionChange={handleSvgPositionChange}
+              parentScale={scale} // 親のスケールを渡す
+              initialPosition={svgPositions[currentPage] || { x: 0, y: 0 }}
+            />
           )}
+          
+          {/* ImageEditor も同様に直接レンダリング */}
           {generatedImages[currentPage] && (
             <ImageEditor
               imageUrl={generatedImages[currentPage]!}
@@ -752,8 +745,8 @@ export default function NoteEditor({
               onDelete={handleImageDelete}
               scale={imageScales[currentPage] || 1}
               onPositionChange={handleImagePositionChange}
-              parentScale={scale} // 親のスケールを渡す
-              initialPosition={imagePositions[currentPage] || { x: 100, y: 100 }} // 追加
+              parentScale={scale}
+              initialPosition={imagePositions[currentPage] || { x: 100, y: 100 }}
             />
           )}
         </div>
