@@ -382,12 +382,21 @@ export default function NoteEditor({
     setIsGeneratingSVG(true)
 
     try {
-      const apiKey = process.env.OPENAI_API_KEY
-      if (!apiKey) {
-        throw new Error('APIキーが設定されていません。')
+      const response = await fetch('/api/generate-svg', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: selectedText }),
+      });
+
+      if (!response.ok) {
+        throw new Error('SVG生成に失敗しました');
       }
-      const svgContent = await generateSVGDiagram(apiKey, selectedText)
-      
+
+      const data = await response.json();
+      const svgContent = data.svg;
+
       // 現在のページにSVG図を設定
       setSvgDiagrams(prevDiagrams => {
         const newDiagrams = [...prevDiagrams]
