@@ -17,8 +17,8 @@
  * 統合し、テキスト、図、画像を含む総合的なノート作成環境を実現しています。
  * また、生成されたノートコンテンツから動画を作成する機能も備えており、
  * パソコン用の横向き動画とスマホ用の縦向き動画の両方に対応しています。
- * ユーザーは動画タイプを選択し、ノートの内容に基づいて適切な形式の動画を
- * 生成することができます。
+ * ユーザーは動画タイプを選択し、ノートの内容に基づいて適切な形の動画を
+ * 生成ることができます。
  * 
  * @module NoteEditor
  */
@@ -411,7 +411,7 @@ export default function NoteEditor({
     }
   }
 
-  // handleGenerateImage 関数を更新
+  // handleGenerateImage 数を更新
   const handleGenerateImage = async () => {
     if (isGeneratingVideo && !videoUrl) {
       handleSetError('動画生成中は画像生成できません。動画生成が完了するまでお待ちください。');
@@ -554,7 +554,12 @@ export default function NoteEditor({
           <Button onClick={handleZoomIn} size="sm" variant="outline">
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <Button onClick={handleToggleEdit} size="sm" variant="outline">
+          <Button 
+            onClick={handleToggleEdit} 
+            size="sm" 
+            variant="outline"
+            disabled={!generatedNotes[currentPage]} // 編集ボタンを無効にする条件を追加
+          >
             <Edit className="h-4 w-4" />
           </Button>
           <Button 
@@ -562,7 +567,7 @@ export default function NoteEditor({
             size="sm" 
             variant="outline" 
             className="ml-2" 
-            disabled={isGeneratingSVG}
+            disabled={isGeneratingSVG || !generatedNotes[currentPage]} // 図を生成ボタンを無効にする条件を追加
           >
             {isGeneratingSVG ? (
               <Loader2 className="animate-spin h-4 w-4" />
@@ -630,7 +635,7 @@ export default function NoteEditor({
               onClick={handleGenerateVideo} 
               size="sm" 
               variant="outline" 
-              disabled={isGeneratingVideo}
+              disabled={isGeneratingVideo || !generatedNotes[currentPage]} // 動画生成ボタンを無効にする条件を追加
               className="w-full sm:w-auto"
             >
               {isGeneratingVideo ? (

@@ -98,29 +98,10 @@ const estimateElementHeight = (element: Element): number => {
   const style = window.getComputedStyle(element);
   const lineHeight = parseFloat(style.lineHeight || '40'); // デフォルトラインハイト
 
-  let height = 0;
+  const text = element.textContent || '';
+  const lines = Math.ceil(text.length / 47); // 47文字で1行と仮定（countLines関数と一致）
 
-  switch (element.tagName.toLowerCase()) {
-    case 'h1':
-      height += lineHeight * 2;
-      break;
-    case 'h2':
-      height += lineHeight * 1.5;
-      break;
-    case 'ul':
-      height += element.children.length * lineHeight;
-      break;
-    case 'p':
-      const text = element.textContent || '';
-      const lines = Math.ceil(text.length / 40); // 40文字で1行と仮定
-      height += lines * lineHeight;
-      break;
-    default:
-      height += lineHeight;
-      break;
-  }
-
-  return height;
+  return lines * lineHeight;
 };
 
 // ページコンテンツをHTMLでラップする関数を更新

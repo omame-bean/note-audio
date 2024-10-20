@@ -11,15 +11,8 @@
   background-size: 100% 40px;
   background-position: 0 -4px; 
   box-sizing: border-box;
-}
-
-.note-content-inner {
-  width: 200mm;
-  margin: 0 auto;
-  padding: 0;
-  box-sizing: border-box;
-  position: relative;
-  top: -4px;
+  overflow: hidden; /* 追加済み */
+  padding: 0 2mm;
 }
 
 .highlight {
@@ -50,3 +43,5 @@ b, strong {
   font-size: 14px;
   color: #666;
 }
+
+/* エラーメッセージ関連のスタイルを削除またはコメントアウト */
