@@ -32,7 +32,7 @@ import AudioRecorder from '@/components/AudioRecorder'
 import NoteEditor from '@/components/NoteEditor'
 import { generateNotePages} from '@/utils/noteUtils'
 import axios from 'axios';
-import { generateSVGDiagram } from '@/utils/svgUtils'
+//import { generateSVGDiagram } from '@/utils/svgUtils'
 //import SVGEditor from '@/components/SVGEditor'
 //import Character from './Character'
 
@@ -94,17 +94,14 @@ export default function NoteTakingApp() {
   // ノート生成後にSVG図を生成する関数
   const generateSVGForNote = async (noteContent: string) => {
     try {
-      const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
-      if (!apiKey) {
-        throw new Error('APIキーが設定されていません。')
-      }
-      const svgContent = await generateSVGDiagram(apiKey, noteContent)
-      setSvgDiagrams(prevDiagrams => [...prevDiagrams, svgContent])
-      setSvgScales(prevScales => [...prevScales, 1])
-      setSvgPositions(prevPositions => [...prevPositions, { x: 50, y: 100 }])
+      const response = await axios.post('/api/generate-svg', { content: noteContent });
+      const svgContent = response.data.svg;
+      setSvgDiagrams(prevDiagrams => [...prevDiagrams, svgContent]);
+      setSvgScales(prevScales => [...prevScales, 1]);
+      setSvgPositions(prevPositions => [...prevPositions, { x: 50, y: 100 }]);
     } catch (error) {
-      console.error('Error generating SVG diagram:', error)
-      setError('SVG図の生成中にエラーが発生しました。')
+      console.error('Error generating SVG diagram:', error);
+      setError('SVG図の生成中にエラーが発生しました。');
     }
   }
 
@@ -149,9 +146,6 @@ export default function NoteTakingApp() {
     }
   }
 
-  // APIキーを環境変数から取得
-  const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || '';
-
   // ユーザーのプロンプトに応じて感情を更新する関数
   const updateEmotion = (message: string) => {
     if (message.includes('ありがとう') || message.includes('嬉しい')) {
@@ -185,7 +179,6 @@ export default function NoteTakingApp() {
             setAudioFile={setAudioFile}
             isTranscribing={isTranscribing}
             setIsTranscribing={setIsTranscribing}
-            apiKey={apiKey}
             emotion={emotion}
             setEmotion={setEmotion}
           />

@@ -63,7 +63,6 @@
    プロジェクトルートに `.env.local` ファイルを作成し、OpenAI APIキーを追加します。
 
    ```
-   NEXT_PUBLIC_OPENAI_API_KEY=your_openai_api_key
    OPENAI_API_KEY=your_openai_api_key
    ```
 

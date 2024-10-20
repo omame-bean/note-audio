@@ -27,28 +27,26 @@ import Character from './Character'
 
 // AudioRecorderコンポーネントのプロパティ定義
 interface AudioRecorderProps {
-  setTranscription: React.Dispatch<React.SetStateAction<string>>
-  setError: React.Dispatch<React.SetStateAction<string | null>>
-  apiKey: string
-  audioFile: File | null
-  setAudioFile: React.Dispatch<React.SetStateAction<File | null>>
-  isTranscribing: boolean
-  setIsTranscribing: React.Dispatch<React.SetStateAction<boolean>>
-  emotion: 'happy' | 'angry' | 'sad' | 'relaxed' | 'surprised' | 'neutral'
-  setEmotion: React.Dispatch<React.SetStateAction<'happy' | 'angry' | 'sad' | 'relaxed' | 'surprised' | 'neutral'>>
+  setTranscription: React.Dispatch<React.SetStateAction<string>>;
+  setError: (error: string | null) => void;
+  audioFile: File | null;
+  setAudioFile: (file: File | null) => void;
+  isTranscribing: boolean;
+  setIsTranscribing: (transcribing: boolean) => void;
+  emotion: 'happy' | 'angry' | 'sad' | 'relaxed' | 'surprised' | 'neutral';
+  setEmotion: (emotion: 'happy' | 'angry' | 'sad' | 'relaxed' | 'surprised' | 'neutral') => void;
 }
 
-export default function AudioRecorder({
+const AudioRecorder: React.FC<AudioRecorderProps> = ({
   setTranscription,
   setError,
-  apiKey,
   audioFile,
   setAudioFile,
   isTranscribing,
   setIsTranscribing,
   emotion,
-  setEmotion
-}: AudioRecorderProps) {
+  setEmotion,
+}) => {
   // 状態の初期化
   const [isRecording, setIsRecording] = useState(false)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
@@ -187,10 +185,6 @@ export default function AudioRecorder({
       setError('音声ファイルをアップロードしてください。')
       return
     }
-    if (!apiKey) {
-      setError('APIキーが設定されていません。')
-      return
-    }
 
     setIsTranscribing(true)
     setError(null)
@@ -200,11 +194,9 @@ export default function AudioRecorder({
     formData.append('model', 'whisper-1')
 
     try {
-      const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      // OpenAI API への直接アクセスを廃止し、サーバーサイドのAPIエンドポイントを使用
+      const response = await fetch('/api/transcribe', { // 変更点
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`
-        },
         body: formData
       })
 
@@ -261,7 +253,7 @@ export default function AudioRecorder({
               </li>
               <li>
                 <strong>ノート生成:</strong>
-                <p className="ml-4">文字起こし結果に基づいてノートを生成します。プロンプトを選択し、「ノート生成」ボタンをクリックすると、整理されたノートが右側のエディタに表示されます。</p>
+                <p className="ml-4">文字起こ結果に基づいてノートを生成します。プロンプトを選択し、「ノート生成」ボタンをクリックすると、整理されたノートが右側のエディタに表示されます。</p>
               </li>
               <li>
                 <strong>ノート編集:</strong>
@@ -358,3 +350,5 @@ export default function AudioRecorder({
     </div>
   )
 }
+
+export default AudioRecorder;

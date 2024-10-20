@@ -382,7 +382,7 @@ export default function NoteEditor({
     setIsGeneratingSVG(true)
 
     try {
-      const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+      const apiKey = process.env.OPENAI_API_KEY
       if (!apiKey) {
         throw new Error('APIキーが設定されていません。')
       }
@@ -574,6 +574,8 @@ export default function NoteEditor({
       }
     }
   };
+
+
 
   return (
     <div className="w-full md:w-2/3 bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
