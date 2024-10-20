@@ -17,9 +17,19 @@ import axios from 'axios'
 export const generateImage = async (prompt: string): Promise<string> => {
   try {
     const response = await axios.post('/api/generate-image', { prompt })
-    return response.data.imageUrl // ここはデータURLになります
+    if (response.data && response.data.imageUrl) {
+      return response.data.imageUrl
+    } else {
+      throw new Error('画像URLが見つかりません。')
+    }
   } catch (error) {
     console.error('Error generating image:', error)
-    throw new Error('画像の生成中にエラーが発生しました。')
+    if (axios.isAxiosError(error) && error.response) {
+      // サーバーからのエラーレスポンスを確認
+      console.error('Server error response:', error.response.data)
+      throw new Error(`画像生成エラー: ${error.response.data.error || '不明なエラー'}`)
+    } else {
+      throw new Error('画像の生成中にエラーが発生しました。')
+    }
   }
 }

@@ -372,7 +372,6 @@ export default function NoteEditor({
       return;
     }
 
-    // 以下は既存のコード
     const selectedText = getSelectedText()
     if (!selectedText) {
       handleSetError('テキストが選択されていません。')
@@ -380,6 +379,7 @@ export default function NoteEditor({
     }
 
     setIsGeneratingSVG(true)
+    handleSetError(null) // エラーメッセージをクリア
 
     try {
       const response = await fetch('/api/generate-svg', {
@@ -413,6 +413,7 @@ export default function NoteEditor({
         newPositions[currentPage] = { x: 50, y: 100 }
         return newPositions
       })
+      handleSetError(null) // 成功時にエラーメッセージをクリア
     } catch (error) {
       console.error('SVG図の生成中にエラーが発生しました:', error)
       handleSetError('SVGの生成中にエラーが発生しました。')
@@ -439,6 +440,7 @@ export default function NoteEditor({
     const truncatedPrompt = selectedText.slice(0, 1000)
 
     setIsGeneratingImage(true)
+    handleSetError(null) // エラーメッセージをクリア
 
     try {
       const imageUrl = await generateImage(truncatedPrompt)
@@ -448,9 +450,10 @@ export default function NoteEditor({
         newImages[currentPage] = imageUrl
         return newImages
       })
+      handleSetError(null) // 成功時にエラーメッセージをクリア
     } catch (error) {
       console.error('画像の生成中にエラーが発生しました:', error)
-      handleSetError('画像の生成中にエラーが発生しました。')
+      handleSetError(error instanceof Error ? error.message : '画像の生成中に予期せぬエラーが発生しました。')
     } finally {
       setIsGeneratingImage(false)
     }
