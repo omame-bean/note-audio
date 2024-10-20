@@ -8,7 +8,7 @@ const LOGIN_EXPIRATION_TIME = 60 * 60 * 1000 // 1時間（ミリ秒）
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
