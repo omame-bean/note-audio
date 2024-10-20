@@ -1,3 +1,15 @@
+/**
+ * VideoProgress.tsx
+ * 
+ * このコンポーネントは、動画生成プロセスの進捗状況を表示します。
+ * 各ステップの状態（待機中、進行中、完了、エラー）を視覚的に表現し、
+ * 現在の進捗状況をテキストで表示します。
+ * 
+ * props:
+ * - progressSteps: 進捗ステップの配列
+ * - videoProgress: 現在の進捗状況を示すテキスト
+ */
+
 import React, { useEffect } from 'react';
 
 interface ProgressStep {
