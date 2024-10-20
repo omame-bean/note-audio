@@ -5,11 +5,10 @@
   font-size: 16px;
   line-height: 40px;
   width: 210mm;
-  height: 297mm;
+  /* height: 297mm; 削除またはコメントアウト */
   position: relative;
-  background: linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px);
   background-size: 100% 40px;
-  background-position: 0 -4px; 
+  background-position: 0 2px; 
   box-sizing: border-box;
   overflow: hidden; /* 追加済み */
   padding: 0 2mm;
@@ -45,3 +44,8 @@ b, strong {
 }
 
 /* エラーメッセージ関連のスタイルを削除またはコメントアウト */
+
+.note-container {
+  overflow: hidden; /* オーバーフローを隠す */
+  background: linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px) 0% 0% / 100% 40px; /* 追加 */
+}

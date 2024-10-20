@@ -39,6 +39,7 @@ import { v4 as uuidv4 } from 'uuid'; // UUIDのインポート
 // 既存のインポートに追加
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import '../styles/NoteEditor.css';
+import { estimateContentHeight, USABLE_PAGE_HEIGHT } from '../utils/noteUtils';
 
 interface NoteEditorProps {
   generatedNotes: string[]
@@ -221,7 +222,7 @@ export default function NoteEditor({
 
   const handleExportPDFClick = () => {
     if (generatedNotes.length === 0 || generatedNotes.every(note => !note)) {
-      // toast の代わりに alert を使用
+      // toast の代わりに alert 使用
       alert("ノートがありません。PDFを出力する前にノートを生成してください。");
       return;
     }
@@ -541,7 +542,38 @@ export default function NoteEditor({
     return ''
   }
 
+  // 追加: 前のコンテンツを保持するためのリファレンス
+  const previousContentRef = useRef<string>(generatedNotes[currentPage] || '');
+  
+  // 追加: 再帰的な入力処理を防ぐためのフラグ
+  const isRevertingRef = useRef<boolean>(false);
 
+  // 追加: ページやノートが変更された際に前のコンテンツを更新
+  useEffect(() => {
+    previousContentRef.current = generatedNotes[currentPage] || '';
+  }, [currentPage, generatedNotes]);
+
+  // handleInput の修正
+  const handleInput = () => {
+    if (isRevertingRef.current) return; // 再帰処理を防止
+
+    if (editorRef.current) {
+      const newContent = editorRef.current.innerHTML;
+      const newHeight = estimateContentHeight(newContent);
+      console.log(`New Content Height: ${newHeight}px`); // 現在の高さをログ出力
+      console.log(`Usable Page Height: ${USABLE_PAGE_HEIGHT}px`); // 使用可能な高さをログ出力
+
+      if (newHeight <= USABLE_PAGE_HEIGHT) {
+        previousContentRef.current = newContent; // 前のコンテンツを更新
+        updateNote(currentPage, newContent); // ノート内容を更新
+      } else {
+        console.log('Height limit exceeded. Input not reflected.'); // 高さ超過時のログ
+        isRevertingRef.current = true; // フラグを立てる
+        editorRef.current.innerHTML = previousContentRef.current; // 前のコンテンツに戻す
+        isRevertingRef.current = false; // フラグを解除
+      }
+    }
+  };
 
   return (
     <div className="w-full md:w-2/3 bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
@@ -689,22 +721,26 @@ export default function NoteEditor({
             height: '297mm',
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
-            overflow: 'visible',
+            overflow: 'hidden', // オーバーフローを隠す
             border: '2px solid #00b0d7',
             boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
             backgroundColor: '#fff',
+            background: 'linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px) 0% 0% / 100% 40px', // 罫線の背景を追加
           }}
         >
           <div
             ref={editorRef}
             contentEditable={isEditing}
+            onInput={handleInput} // 入力時に handleInput を呼び出す
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
             className="note-content"
             suppressContentEditableWarning={true}
+            // 高さは CSS から削除されているため、編集時は自動調整されます
           >
             <div className="note-content-inner">
               {/* ノートのHTMLコンテンツ */}
+              {isEditing ? null : generatedNotes[currentPage] || '<p class="text-gray-400">ノートを生成してください</p>'}
             </div>
           </div>
           

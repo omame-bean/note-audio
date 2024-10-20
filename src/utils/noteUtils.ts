@@ -24,11 +24,11 @@ const styles = noteEditorStyles as { [key: string]: string };
 const PAGE_HEIGHT = 297; // A4サイズの高さ（mm）
 const PAGE_WIDTH = 210; // A4サイズの幅（mm）
 const PADDING_TOP = 40; // 上部のパディング（px）
-const PADDING_BOTTOM = 60; // 下部のパディング（px）
+const PADDING_BOTTOM = 0; // 下部のパディング（px）
 const MM_TO_PX = 3.779528; // mmをpxに変換する定数
 
 // 使用可能なページの高さ
-const USABLE_PAGE_HEIGHT = PAGE_HEIGHT * MM_TO_PX - PADDING_TOP - PADDING_BOTTOM;
+export const USABLE_PAGE_HEIGHT = PAGE_HEIGHT * MM_TO_PX - PADDING_TOP - PADDING_BOTTOM;
 
 // 画像の読み込みを待つヘルパー関数を追加
 const waitForImages = (element: HTMLElement): Promise<void> => {
@@ -54,36 +54,19 @@ export const generateNotePages = (content: string): string[] => {
   let currentHeight = 0; // ページの現在の高さを追跡
 
   elements.forEach((element) => {
-    if (element.tagName.toLowerCase() === 'ul') {
-      // <ul>要素の処理を追加
-      const ulHtml = element.outerHTML;
-      const ulHeight = estimateElementHeight(element);
+    const elementHtml = element.outerHTML;
+    const elementHeight = estimateElementHeight(element);
 
-      if (currentHeight + ulHeight > USABLE_PAGE_HEIGHT) {
-        if (currentHeight > 0) {
-          pages.push(wrapPageContent(currentPage, pages.length));
-          currentPage = '';
-          currentHeight = 0;
-        }
+    if (currentHeight + elementHeight > USABLE_PAGE_HEIGHT) {
+      if (currentHeight > 0) {
+        pages.push(wrapPageContent(currentPage, pages.length));
+        currentPage = '';
+        currentHeight = 0;
       }
-
-      currentPage += ulHtml;
-      currentHeight += ulHeight;
-    } else {
-      const elementHtml = element.outerHTML;
-      const elementHeight = estimateElementHeight(element);
-
-      if (currentHeight + elementHeight > USABLE_PAGE_HEIGHT) { // 修正: 使用可能なページ高さを使用
-        if (currentHeight > 0) {
-          pages.push(wrapPageContent(currentPage, pages.length));
-          currentPage = '';
-          currentHeight = 0;
-        }
-      }
-
-      currentPage += elementHtml;
-      currentHeight += elementHeight;
     }
+
+    currentPage += elementHtml;
+    currentHeight += elementHeight;
   });
 
   if (currentPage) {
@@ -105,14 +88,55 @@ const estimateElementHeight = (element: Element): number => {
 };
 
 // ページコンテンツをHTMLでラップする関数を更新
-const wrapPageContent = (content: string, pageNumber: number): string => {
+const wrapPageContent = (content: string, pageNumber: number, fixedHeight: boolean = true): string => {
+  let contentStyles = Object.entries(styles)
+    .map(([key, value]) => {
+      if (key === 'note-content') {
+        if (fixedHeight) {
+          // 高さを固定するスタイル
+          return `.${key} { 
+            font-family: 'Zen Kurenaido', sans-serif; 
+            font-size: 16px; 
+            line-height: 40px; 
+            width: 210mm; 
+            height: 297mm; /* 固定高さを再追加 */
+            position: relative; 
+            background: linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px); 
+            background-size: 100% 40px; 
+            background-position: 0 2px; 
+            box-sizing: border-box; 
+            overflow: hidden; 
+            padding: 0 2mm; 
+          }`;
+        } else {
+          // 高さを固定しないスタイル
+          return `.${key} { 
+            font-family: 'Zen Kurenaido', sans-serif; 
+            font-size: 16px; 
+            line-height: 40px; 
+            width: 210mm; 
+            /* height: 297mm; 削除 */
+            position: relative; 
+            background: linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px); 
+            background-size: 100% 40px; 
+            background-position: 0 2px; 
+            box-sizing: border-box; 
+            overflow: hidden; 
+            padding: 0 2mm; 
+          }`;
+        }
+      }
+      return `.${key} { ${value} }`;
+    })
+    .join('\n');
+
   return `
-    <style>${Object.entries(styles).map(([key, value]) => `.${key} { ${value} }`).join('\n')}</style>
+    <style>${contentStyles}</style>
     <div class="note-content">
       <div class="note-content-inner">
         ${content}
       </div>
-      <div class="page-number">- ${pageNumber + 1} -</div>
+      ${fixedHeight ? `<div class="page-number">- ${pageNumber + 1} -</div>` : ''}
     </div>
   `;
 };
@@ -147,8 +171,11 @@ export const handleExportPDF = async (
     pageElement.style.position = 'relative';
     pageElement.style.padding = '0';
     pageElement.style.boxSizing = 'border-box';
-    pageElement.style.backgroundColor = 'white';
     pageElement.style.overflow = 'hidden';
+
+    // {{ edit_1 }} 罫線の背景を追加
+    pageElement.style.background = 'linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px) 0% 0% / 100% 40px';
+
     document.body.appendChild(pageElement);
 
     if (svgDiagrams[i]) {
@@ -207,3 +234,20 @@ export const handleExportPDF = async (
   pdf.save('generated_note.pdf');
   console.log('PDF saved successfully');
 };
+
+/**
+ * コンテンツの高さをピクセルで推定する関数を修正
+ */
+export const estimateContentHeight = (content: string): number => {
+  const tempDiv = document.createElement('div');
+  tempDiv.style.visibility = 'hidden';
+  tempDiv.style.position = 'absolute';
+  tempDiv.style.width = `${PAGE_WIDTH * MM_TO_PX}px`;
+  tempDiv.innerHTML = wrapPageContent(content, 0, false); // 高さを固定しない
+  document.body.appendChild(tempDiv);
+  const height = tempDiv.scrollHeight;
+  console.log(`Content Height: ${height}px`); // 高さをログ出力
+  document.body.removeChild(tempDiv);
+  return height;
+};
+
