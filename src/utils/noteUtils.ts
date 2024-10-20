@@ -89,7 +89,7 @@ const estimateElementHeight = (element: Element): number => {
 
 // ページコンテンツをHTMLでラップする関数を更新
 const wrapPageContent = (content: string, pageNumber: number, fixedHeight: boolean = true): string => {
-  let contentStyles = Object.entries(styles)
+  const contentStyles = Object.entries(styles)
     .map(([key, value]) => {
       if (key === 'note-content') {
         if (fixedHeight) {
@@ -250,4 +250,3 @@ export const estimateContentHeight = (content: string): number => {
   document.body.removeChild(tempDiv);
   return height;
 };
-
