@@ -135,15 +135,10 @@ export default function NoteEditor({
   const clientIdRef = useRef<string>(uuidv4());
 
   const updateProgressStep = useCallback((step: string, status: ProgressStep['status'], message?: string, video_url?: string) => {
-    console.log(`ステップ更新: ${step} - ${status}`);
     setProgressSteps(prevSteps =>
       prevSteps.map(s => s.step === step ? { ...s, status, message, video_url } : s)
     );
   }, []);
-
-  useEffect(() => {
-    console.log('Progress steps updated:', progressSteps);
-  }, [progressSteps]);
 
   useEffect(() => {
     if (editorRef.current && !isEditing) {
@@ -497,20 +492,17 @@ export default function NoteEditor({
           updateProgressStep(updatedStep, status, message, video_url);
 
           if (step === "最終出力" && status === "completed" && video_url) {
-            console.log("動画URL設定:", `${BACKEND_URL}${video_url}`);
             setVideoUrl(`${BACKEND_URL}${video_url}`);
             setIsGeneratingVideo(false);
             setShowProgress(false);
             clearError(); // 動画URL設定時にエラーメッセージをクリア
           }
         } catch (err) {
-          console.error('進捗データの解析エラー:', err, '問題のあるデータ:', event.data);
           setError('進捗データの解析に失敗しました。');
         }
       };
 
       newEventSource.onerror = (err) => {
-        console.error('SSE エラー:', err);
         newEventSource.close();
         setEventSource(null);
         setIsGeneratingVideo(false);
@@ -518,7 +510,6 @@ export default function NoteEditor({
       };
 
     } catch (err: unknown) {
-      console.error('動画生成リクエストのエラー:', err);
       setError('動画生成のリクエストに失敗しました。');
       setIsGeneratingVideo(false);
       setShowProgress(false);
@@ -527,7 +518,6 @@ export default function NoteEditor({
 
   const handleDownloadVideo = () => {
     if (videoUrl) {
-      console.log("動画ダウンロード開始:", videoUrl);
       const url = new URL(videoUrl, BACKEND_URL);
       url.searchParams.append('client_id', clientIdRef.current);
       window.open(url.toString(), '_blank');
@@ -572,17 +562,14 @@ export default function NoteEditor({
     if (editorRef.current) {
       const newContent = editorRef.current.innerHTML;
       const newHeight = estimateContentHeight(newContent);
-      console.log(`New Content Height: ${newHeight}px`); // 現在の高さをログ出力
-      console.log(`Usable Page Height: ${USABLE_PAGE_HEIGHT}px`); // 使用可能な高さをログ出力
 
       if (newHeight <= USABLE_PAGE_HEIGHT) {
         previousContentRef.current = newContent; // 前のコンテンツを更新
         updateNote(currentPage, newContent); // ノート内容を更新
       } else {
-        console.log('Height limit exceeded. Input not reflected.'); // 高さ超過時のログ
-        isRevertingRef.current = true; // フラグを立てる
-        editorRef.current.innerHTML = previousContentRef.current; // 前のコンテンツに戻す
-        isRevertingRef.current = false; // フラグを解除
+        isRevertingRef.current = true;
+        editorRef.current.innerHTML = previousContentRef.current;
+        isRevertingRef.current = false;
       }
     }
   };
@@ -656,7 +643,7 @@ export default function NoteEditor({
 
       {/* 動画生成セクション */}
       <div className="flex flex-col p-4 bg-gray-100 border-t border-b">
-        <span className="text-sm font-medium mb-2">動画生成（生成に2～3分かかります）</span>
+        <span className="text-sm font-medium mb-2">動画生成（生成に3～5分かかります）</span>
         <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
           <Select value={videoType} onValueChange={(value: 'landscape' | 'portrait') => setVideoType(value)}>
             <SelectTrigger className="w-full sm:w-[180px]">

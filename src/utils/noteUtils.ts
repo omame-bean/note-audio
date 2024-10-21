@@ -151,19 +151,9 @@ export const handleExportPDF = async (
   imageScales: number[],
   imagePositions: { x: number; y: number }[]
 ) => {
-  console.log('=== handleExportPDF Start ===');
-  console.log('Generated Notes:', generatedNotes);
-  console.log('SVG Diagrams:', svgDiagrams);
-  console.log('SVG Scales:', svgScales);
-  console.log('SVG Positions:', svgPositions);
-  console.log('Generated Images:', generatedImages);
-  console.log('Image Scales:', imageScales);
-  console.log('Image Positions:', imagePositions);
-
   const pdf = new jsPDF('p', 'mm', 'a4');
 
   for (let i = 0; i < generatedNotes.length; i++) {
-    console.log(`--- Processing Page ${i + 1} ---`);
     const pageElement = document.createElement('div');
     pageElement.innerHTML = generatedNotes[i] || '';
     pageElement.style.width = `${PAGE_WIDTH}mm`;
@@ -172,14 +162,11 @@ export const handleExportPDF = async (
     pageElement.style.padding = '0';
     pageElement.style.boxSizing = 'border-box';
     pageElement.style.overflow = 'hidden';
-
-    // {{ edit_1 }} 罫線の背景を追加
     pageElement.style.background = 'linear-gradient(to bottom, #ffffff 39px, #00b0d7 1px) 0% 0% / 100% 40px';
 
     document.body.appendChild(pageElement);
 
     if (svgDiagrams[i]) {
-      // 現在のページのSVGを追加
       const svgDiagram = svgDiagrams[i];
       const svgScale = svgScales[i] || 1;
       const svgPosition = svgPositions[i] || { x: 0, y: 0 };
@@ -194,7 +181,6 @@ export const handleExportPDF = async (
       pageElement.appendChild(svgElement);
     }
 
-    // 画像の処理を追加
     if (generatedImages[i]) {
       const imageUrl = generatedImages[i];
       const imageScale = imageScales[i] || 1;
@@ -205,22 +191,21 @@ export const handleExportPDF = async (
       imageElement.style.position = 'absolute';
       imageElement.style.left = `${imagePosition.x}px`;
       imageElement.style.top = `${imagePosition.y}px`;
-      imageElement.style.width = '512px'; // 幅を512pxに固定
-      imageElement.style.height = '512px'; // 高さを512pxに固定
+      imageElement.style.width = '512px';
+      imageElement.style.height = '512px';
       imageElement.style.transform = `scale(${imageScale})`;
       imageElement.style.transformOrigin = 'top left';
-      imageElement.crossOrigin = 'anonymous'; // CORS設定
+      imageElement.crossOrigin = 'anonymous';
       pageElement.appendChild(imageElement);
     }
 
-    // すべての画像が読み込まれるまで待機
     await waitForImages(pageElement);
 
     await new Promise<void>(resolve => {
       html2canvas(pageElement, {
         scale: 2,
         useCORS: true,
-        logging: true,
+        logging: false,
       }).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
         if (i > 0) pdf.addPage();
@@ -232,21 +217,19 @@ export const handleExportPDF = async (
   }
 
   pdf.save('generated_note.pdf');
-  console.log('PDF saved successfully');
 };
 
 /**
- * コンテンツの高さをピクセルで推定する関数を修正
+ * コンテンツの高さをピクセルで推定する関数
  */
 export const estimateContentHeight = (content: string): number => {
   const tempDiv = document.createElement('div');
   tempDiv.style.visibility = 'hidden';
   tempDiv.style.position = 'absolute';
   tempDiv.style.width = `${PAGE_WIDTH * MM_TO_PX}px`;
-  tempDiv.innerHTML = wrapPageContent(content, 0, false); // 高さを固定しない
+  tempDiv.innerHTML = wrapPageContent(content, 0, false);
   document.body.appendChild(tempDiv);
   const height = tempDiv.scrollHeight;
-  console.log(`Content Height: ${height}px`); // 高さをログ出力
   document.body.removeChild(tempDiv);
   return height;
 };

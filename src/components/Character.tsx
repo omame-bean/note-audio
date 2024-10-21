@@ -64,41 +64,20 @@ const VRMLoader = ({ emotion }: CharacterProps) => {
           VRMUtils.rotateVRM0(vrm)
           mixerRef.current = new THREE.AnimationMixer(vrm.scene)
 
-          // モデルの位置とスケールを調整
           vrm.scene.position.set(0, -11, -1.0)
           vrm.scene.scale.setScalar(7.8)
 
-          if (vrm.expressionManager) {
-            console.log('Available expressions:')
-            // 表情名のリストを定義（必要に応じて追加・修正）
-            const availableExpressions = [
-              'happy',
-              'angry',
-              'sad',
-              'relaxed',
-              'surprised',
-              'neutral',
-              'blink',
-              // 他にも必要な表情を追加
-            ]
-
-            console.log('Available expressions:', availableExpressions)
-          }
-
           setNaturalPose(vrm)
           loadAnimations().then(() => {
-            // アニメーションの読み込みが完了したら、VRMの読み込み完了をセット
             setIsVRMLoaded(true)
           }).catch(error => {
-            console.error('Error loading animations:', error)
+            // エラー処理
           })
         }
       },
-      (progressEvent) => {
-        console.log('Loading progress:', (progressEvent.loaded / progressEvent.total) * 100, '%')
-      },
+      undefined,
       (error) => {
-        console.error('VRMモデルの読み込み中にエラーが発生しました:', error)
+        // エラー処理
       }
     )
 
@@ -111,49 +90,23 @@ const VRMLoader = ({ emotion }: CharacterProps) => {
   }, [scene])
 
   useEffect(() => {
-    if (!isVRMLoaded) return // VRMが読み込まれていない場合は何もしない
+    if (!isVRMLoaded) return
 
-    console.log('Current emotion:', emotion);
     if (vrmRef.current && vrmRef.current.expressionManager) {
-      console.log('VRM and expressionManager are available');
-      
-      // すべての表情をリセット
       const expressionNames = [
-        'happy',
-        'angry',
-        'sad',
-        'relaxed',
-        'surprised',
-        'neutral',
-        'blink',
-        // 必要に応じて他表情も追加
+        'happy', 'angry', 'sad', 'relaxed', 'surprised', 'neutral', 'blink',
       ]
 
       expressionNames.forEach((name) => {
         vrmRef.current!.expressionManager.setValue(name, 0)
-        console.log(`Reset expression: ${name}`)
       })
 
-      // 感情に応じて適切な表情を設定
-      console.log(`Setting ${emotion} expression`)
       vrmRef.current.expressionManager.setValue(emotion, 1.0)
-      console.log(`${emotion} expression value: 1.0`)
-
-      // 表情の変更を即座に反映
       vrmRef.current.update(0)
 
-      // 現在の表情の値をログ出力（取得方法がないためコメントアウト）
-      /*
-      expressionNames.forEach((name) => {
-        const value = vrmRef.current!.expressionManager.getValue(name)
-        console.log(`${name}: ${value}`)
-      })
-      */
-
-      // まばたきのアニメーション
       const blinkAnimation = () => {
         if (vrmRef.current && vrmRef.current.expressionManager) {
-          if (emotion !== 'happy') {  // happyの時は瞬きしない
+          if (emotion !== 'happy') {
             vrmRef.current.expressionManager.setValue('blink', 1.0)
             vrmRef.current.update(0)
             setTimeout(() => {
@@ -181,8 +134,6 @@ const VRMLoader = ({ emotion }: CharacterProps) => {
       return () => {
         clearInterval(blinkInterval)
       }
-    } else {
-      console.log('VRM or expressionManager is not available')
     }
   }, [emotion, isVRMLoaded])
 
@@ -358,7 +309,7 @@ const CharacterComponent = ({ emotion, setEmotion }: CharacterProps) => {
             ref={textareaRef}
             value={chatInput}
             onChange={handleInputChange}
-            placeholder="キャラクターと会話する..."
+            placeholder="こはると会話する..."
             className="mr-2 flex-grow resize-none overflow-y-auto"
             style={{ minHeight: '15px', maxHeight: '96px' }} // 1行分の高さから4行分の高さまで
             onKeyPress={(e) => {
@@ -395,22 +346,17 @@ const loadAnimations = async () => {
 
   const animationFiles = [
     { name: 'idle', file: 'idle.vrma' },
-    // 他のアニメーションファイルを追加
   ]
 
   for (const anim of animationFiles) {
     try {
       const gltf = await loader.loadAsync(`/animations/${anim.file}`)
       const vrmAnimations = gltf.userData.vrmAnimations
-      if (vrmAnimations && vrmAnimations.length > 0) {
-        console.log(`Loaded animation: ${anim.name}`)
-        // vrmを使用する例：
-        // const clip = vrmAnimations[0].createAnimationClip(vrm);
-      } else {
-        console.warn(`No VRM animations found for ${anim.name}`)
+      if (!(vrmAnimations && vrmAnimations.length > 0)) {
+        // 警告処理
       }
     } catch (error) {
-      console.error(`Error loading animation ${anim.name}:`, error)
+      // エラー処理
     }
   }
 }

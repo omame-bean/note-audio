@@ -78,7 +78,6 @@ export default function SVGEditor({
   const handleStart = useCallback((clientX: number, clientY: number) => {
     setIsDragging(true)
     setDragStart({ x: clientX / parentScale - position.x, y: clientY / parentScale - position.y })
-    console.log('Drag start:', { x: clientX, y: clientY })
   }, [parentScale, position])
 
   const handleMove = useCallback((clientX: number, clientY: number) => {
@@ -89,13 +88,11 @@ export default function SVGEditor({
       const newPosition = { x: newX, y: newY }
       setPosition(newPosition)
       onPositionChange(newPosition)
-      console.log('Dragging:', { newPosition })
     }
   }, [isDragging, isEditing, dragStart, parentScale, onPositionChange])
 
   const handleEnd = useCallback(() => {
     setIsDragging(false)
-    console.log('Drag end')
   }, [])
 
   // 既存の handleMouseDown, handleMouseMove, handleMouseUp を以下のように修正または追加
@@ -141,16 +138,12 @@ export default function SVGEditor({
   const handleZoomIn = useCallback(() => {
     const newScale = Math.min(scale + 0.1, 2)
     onUpdate(newScale)
-    console.log('Zoom in:', newScale)
   }, [scale, onUpdate])
 
   const handleZoomOut = useCallback(() => {
     const newScale = Math.max(scale - 0.1, 0.5)
     onUpdate(newScale)
-    console.log('Zoom out:', newScale)
   }, [scale, onUpdate])
-
-  console.log('Render:', { position, isEditing, scale, parentScale, svgSize })
 
   return (
     <div 

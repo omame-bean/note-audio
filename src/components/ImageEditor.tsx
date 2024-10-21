@@ -29,7 +29,7 @@ interface ImageEditorProps {
   scale: number
   onPositionChange: (newPosition: { x: number, y: number }) => void
   parentScale: number
-  initialPosition: { x: number, y: number } // 追加
+  initialPosition: { x: number, y: number }
 }
 
 export default function ImageEditor({
@@ -40,27 +40,22 @@ export default function ImageEditor({
   scale,
   onPositionChange,
   parentScale,
-  initialPosition, // 追加
+  initialPosition,
 }: ImageEditorProps) {
-  const [position, setPosition] = useState(initialPosition) // 修正
+  const [position, setPosition] = useState(initialPosition)
   const [isDragging, setIsDragging] = useState(false)
   const [initialMousePos, setInitialMousePos] = useState({ x: 0, y: 0 })
   const [initialPositionState, setInitialPositionState] = useState({ x: 0, y: 0 })
   const [showControls, setShowControls] = useState(false)
 
   useEffect(() => {
-    setPosition(initialPosition) // 親からの初期位置を反映
+    setPosition(initialPosition)
   }, [initialPosition])
-
-  useEffect(() => {
-    console.log('Scale updated:', scale)
-  }, [scale])
 
   const handleStart = useCallback((clientX: number, clientY: number) => {
     setIsDragging(true)
     setInitialMousePos({ x: clientX, y: clientY })
     setInitialPositionState({ ...position })
-    console.log('Drag start:', { x: clientX, y: clientY })
   }, [position])
 
   const handleMove = useCallback((clientX: number, clientY: number) => {
@@ -72,13 +67,11 @@ export default function ImageEditor({
       const newPosition = { x: newX, y: newY }
       setPosition(newPosition)
       onPositionChange(newPosition)
-      console.log('Dragging:', { newPosition })
     }
   }, [isDragging, isEditing, initialMousePos, initialPositionState, parentScale, onPositionChange])
 
   const handleEnd = useCallback(() => {
     setIsDragging(false)
-    console.log('Drag end')
   }, [])
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -111,13 +104,11 @@ export default function ImageEditor({
   const handleZoomIn = () => {
     const newScale = Math.min(scale + 0.1, 2)
     onUpdate(newScale)
-    console.log('Zoom in:', newScale)
   }
 
   const handleZoomOut = () => {
     const newScale = Math.max(scale - 0.1, 0.5)
     onUpdate(newScale)
-    console.log('Zoom out:', newScale)
   }
 
   // 新規追加: タッチイベントハンドラー

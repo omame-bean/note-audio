@@ -58,6 +58,10 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
   // トグル用の状態
   const [isManualVisible, setIsManualVisible] = useState(false)
 
+  // 定数の定義
+  const MAX_RECORDING_TIME = 5 * 60; // 5分（秒単位）
+  const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB（バイト単位）
+
   // トグル関数
   const toggleManual = () => {
     setIsManualVisible(!isManualVisible)
@@ -111,9 +115,9 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const handleStartRecording = () => {
     if (recognitionRef.current) {
       if (!isRecording) {
-        const remainingTime = Math.max(0, 15 * 60 - totalRecordingTime)
+        const remainingTime = Math.max(0, MAX_RECORDING_TIME - totalRecordingTime)
         if (remainingTime === 0) {
-          setError('録音可能な最大時間（15分）に達しました。')
+          setError('録音可能な最大時間（5分）に達しました。')
           return
         }
 
@@ -122,7 +126,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
         setError(null)
         setCurrentSessionTime(0)
 
-        // 残り時間または15分後に録音を自動停止するタイマーを設定
+        // 残り時間または5分後に録音を自動停止するタイマーを設定
         recordingTimeoutRef.current = setTimeout(() => {
           handleStopRecording()
         }, remainingTime * 1000)
@@ -156,7 +160,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
   // 残り時間を計算する関数
   const getRemainingTime = () => {
-    const remainingSeconds = Math.max(0, 15 * 60 - totalRecordingTime)
+    const remainingSeconds = Math.max(0, MAX_RECORDING_TIME - totalRecordingTime)
     const minutes = Math.floor(remainingSeconds / 60)
     const seconds = remainingSeconds % 60
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
@@ -170,8 +174,8 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
         setError('WAVまたはMP3ファイルのみアップロード可能です。')
         return
       }
-      if (file.size > 25 * 1024 * 1024) { // 25MB limit (approx. 15 minutes of audio)
-        setError('ファイルサイズは25MB以下にしてください（約15分の音声）。')
+      if (file.size > MAX_FILE_SIZE) {
+        setError('ファイルサイズは4MB未満にしてください。')
         return
       }
       setAudioFile(file)
@@ -241,11 +245,11 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
             <ol className="list-decimal list-inside space-y-1">
               <li>
                 <strong>マイク入力:</strong>
-                <p className="ml-4">マイクアイコンをクリックして録音を開始します。録音は最大15分間行え、制限時間に達すると自動的に停止します。録音中は現在の録音時間と合計録音時間が表示されます。</p>
+                <p className="ml-4">マイクアイコンをクリックして録音を開始します。録音は最大5分間行え、制限時間に達すると自動的に停止します。録音中は現在の録音時間と合計録音時間が表示されます。</p>
               </li>
               <li>
                 <strong>ファイル入力:</strong>
-                <p className="ml-4">WAVまたはMP3形式の音声ファイル（最大25MB）をアップロードできます。アップロード後、「文字起こし開始」ボタンをクリックして音声ファイルの文字起こしを行います。</p>
+                <p className="ml-4">WAVまたはMP3形式の音声ファイル（最大4MB）をアップロードできます。アップロード後、「文字起こし開始」ボタンをクリックして音声ファイルの文字起こしを行います。</p>
               </li>
               <li>
                 <strong>文字起こし結果:</strong>
@@ -269,14 +273,14 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
               </li>
               <li>
                 <strong>動画生成:</strong>
-                <p className="ml-4">生成されたノートから動画を作成できます。「動画タイプを選択」ドロップダウンメニューから、パソコン用（横向き）またはスマホ用（縦向き）の動画形式を選択できます。「動画を生成」ボタンをクリックすると、選択したタイプでノートの内容を基に動画が生成されます。生成には2～3分程度かかります。生成が完了すると、動画をダウンロードできます。</p>
+                <p className="ml-4">生成されたノートから動画を作成できます。「動画タイプを選択」ドロップダウンメニューから、パソコン用（横向き）またはスマホ用（縦向き）の動画形式を選択できます。「動画を生成」ボタンをクリックすると、選択したタイプでノートの内容を基に動画が生成されます。生成には3～5分程度かかります。生成が完了すると、動画をダウンロードできます。</p>
               </li>
               <li>
                 <strong>制限事項:</strong>
                 <ul className="list-disc list-inside ml-8">
                   <li>図と画像は1ページにつき、それぞれ1つまでの設置が可能です。それを超えると上書きされます。</li>
-                  <li>録音時間は最大15分までです。</li>
-                  <li>アップロード可能な音声ファイルのサイズは25MBまでです。</li>
+                  <li>録音時間は最大5分までです。</li>
+                  <li>アップロード可能な音声ファイルのサイズは4MBまでです。</li>
                   <li>文字起こしにはインターネット接続が必要です。</li>
                   <li>ブラウザによっては音声認識機能がサポートされていない場合があります。</li>
                   <li>動画生成には時間がかかり、サーバーの負荷状況によっては更に時間がかかる場合があります。</li>
@@ -298,7 +302,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
           <Button 
             onClick={handleStartRecording} 
             className="w-full"
-            disabled={totalRecordingTime >= 15 * 60}
+            disabled={totalRecordingTime >= MAX_RECORDING_TIME}
           >
             {isRecording ? (
               <>
@@ -325,6 +329,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
         </TabsContent>
         <TabsContent value="file">
           <div className="space-y-2">
+            <p className="text-xs text-gray-500 mb-1">ファイルサイズは4MBまでです。</p>
             <Input
               type="file"
               accept="audio/wav,audio/mpeg"

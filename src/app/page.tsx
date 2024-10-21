@@ -77,7 +77,7 @@ export default function Home() {
     <div className="pt-5 p-5">
       <div className="max-w-md mx-auto">
         <form onSubmit={handleSubmit} className="p-6 bg-white rounded shadow-md">
-          <h2 className="mb-4 text-xl font-bold">パスワードを入力してください</h2>
+          <h2 className="mb-4 text-base font-bold text-center">パスワードを入力してください</h2>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}

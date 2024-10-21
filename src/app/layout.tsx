@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import Image from 'next/image';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,11 +30,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-blue-50 to-indigo-100`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <header className="mb-8 pt-5">
-            <h1 className="text-4xl font-bold text-indigo-900 text-center">AI音声ノートアプリ</h1>
-            <p className="text-xl text-indigo-700 text-center mt-2">音声からスマートノートを瞬時に作成</p>
-            <p className="text-x0 text-indigo-500 text-center mt-0">ノート内容の動画も作成できる！</p>
-            <p className="text-x0 text-indigo-500 text-center mt-0">スマホからの操作もOK！</p>
+          <header className="mb-8 pt-5 relative">
+            <h1 className="text-2xl font-bold text-indigo-900 text-center table mx-auto relative before:content-[''] before:absolute before:top-0.5 before:right-full before:w-6 before:h-6 before:bg-[url('/image_chara.png')] before:bg-contain before:bg-no-repeat before:mr-2">AI音声ノートアプリ</h1>
+            <p className="text-1xl text-indigo-700 text-center mt-2">音声からスマートノートを瞬時に作成</p>
+            <p className="text-1x1 text-indigo-500 text-center mt-0">ノート内容の動画も作成できる！</p>
+            <p className="text-1x1 text-indigo-500 text-center mt-0">スマホからの操作もOK！</p>
           </header>
 
             {children}

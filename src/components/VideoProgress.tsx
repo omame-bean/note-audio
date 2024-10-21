@@ -10,7 +10,7 @@
  * - videoProgress: 現在の進捗状況を示すテキスト
  */
 
-import React, { useEffect } from 'react';
+import React from 'react';
 
 interface ProgressStep {
   step: string;
@@ -23,11 +23,6 @@ interface VideoProgressProps {
 }
 
 const VideoProgress: React.FC<VideoProgressProps> = ({ progressSteps, videoProgress }) => {
-  useEffect(() => {
-    console.log('VideoProgress 渡された progressSteps:', progressSteps);
-    console.log('VideoProgress 渡された videoProgress:', videoProgress);
-  }, [progressSteps, videoProgress]);
-
   return (
     <div className="p-4 bg-gray-100 border-t">
       <h3 className="text-lg font-semibold mb-2">動画生成の進捗状況</h3>
