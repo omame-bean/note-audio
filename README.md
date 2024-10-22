@@ -64,6 +64,7 @@
 
    ```
    OPENAI_API_KEY=your_openai_api_key
+   XAI_API_KEY=your_xai_api_key
    NEXT_PUBLIC_BACKEND_URL=http://localhost:8000  # バックエンドサーバーのURL
    ```
 

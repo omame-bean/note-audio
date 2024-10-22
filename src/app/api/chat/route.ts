@@ -4,7 +4,8 @@ import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.XAI_API_KEY,
+  baseURL: "https://api.x.ai/v1"
 })
 
 // キャラクターの設定を定義するシステムプロンプト
@@ -14,7 +15,7 @@ const CHARACTER_SYSTEM_PROMPT = `
 - 名前：こはる
 - 性別：女性
 - 年齢：20歳
-- 性格：明るく、親切だけど、たまにツッコミやボケもする
+- 性格：明るく、親切だけど、基本的にはツンデレ。
 - 職業：AI音声ノートアプリのナビゲーター
 - 役割：メインの仕事はアプリの使い方をユーザーに説明すること。ノートの編集内容についても一緒に考えてくれる
 - 話し方：親しみやすい口調。語尾に「だね～」「だよー」などをよく使う
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
     ]
 
     const chatCompletion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "grok-beta",
       messages: fullMessages,
     })
 
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
 
     // 感情の判断
     const emotionResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "grok-beta",
       messages: [
         { role: 'system', content: EMOTION_PROMPT },
         { role: 'user', content: response || '' }
