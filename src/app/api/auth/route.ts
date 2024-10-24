@@ -7,7 +7,8 @@ const MAX_ATTEMPTS = 5 // 15分間で5回まで
 const attempts = new Map<string, { count: number; timestamp: number }>()
 
 export async function POST(request: NextRequest) {
-  const ip = request.ip || 'unknown'
+  const forwardedFor = request.headers.get('x-forwarded-for')
+  const ip = forwardedFor ? forwardedFor.split(',')[0] : 'unknown'
   
   // レート制限のチェック
   const now = Date.now()
